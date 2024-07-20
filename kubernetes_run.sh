@@ -1,0 +1,1 @@
+python train.py >> logs/gpt2_new.log

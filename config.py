@@ -1,0 +1,53 @@
+device = "gpu"
+precision = "bf16"
+log_dir = "logs"
+
+# pretrained model config
+# batch_size = 20
+# dataset = "cerebras/SlimPajama-627B"
+# epochs = 10
+# eval_steps = 500
+# learning_rate = 1e-4
+# warmup_steps = 1000
+# grad_clip = 1.0
+# mix_precision = True
+# grad_accumulation_steps = 10
+# preload = False
+# weight_decay = 1e-4
+# load_best_model_at_end = True
+# metric_for_best_model = "eval_perplexity"
+# greater_is_better = False
+# total_steps = 10000
+# max_input_length = 1024
+# eval_sample = 1000000
+# model_name = "gpt2"
+# checkpoint_dir = "/workspace/RetrofittingLLM/results/checkpoint-7000/"
+# eval_datatset = "CogComp/trec" # "cais/mmlu"
+# tuning_mode = False
+
+# finetuning config
+tuning_mode = True
+tuning_set = "stanfordnlp/coqa"  # "cais/mmlu"
+eval_dataset = "stanfordnlp/coqa" # "cais/mmlu"
+lora_r = 10
+lora_alpha = 16
+batch_size = 32
+eval_batch_size = 128
+epochs = 10
+eval_steps = 500
+learning_rate = 2e-5
+warmup_steps = 1000
+grad_clip = 1.0
+mix_precision = True
+grad_accumulation_steps = 10
+preload = False
+weight_decay = 1e-4
+load_best_model_at_end = True
+metric_for_best_model = None
+greater_is_better = False
+total_steps = 1010
+max_input_length = 1024
+eval_sample = 1000000
+model_name = "gpt2"
+checkpoint_dir = "/workspace/RetrofittingLLM/results/checkpoint-complete/"
+save_steps = 500

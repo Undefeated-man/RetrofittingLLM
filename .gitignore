@@ -1,0 +1,9 @@
+*.json
+*.jsonl
+*.pkl
+*.pdf
+*.out
+*.csv
+results/
+__pycache__/
+.git/

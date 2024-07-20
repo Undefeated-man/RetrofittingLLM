@@ -1,0 +1,18 @@
+WARNING: If you use conda to create environments, your home directory may fill up. Please see our documentation at 
+ https://www.wiki.ed.ac.uk/display/ResearchServices/Anaconda for advice.
+Warning: This module should only be used with the A100 GPU nodes.  If you are using the K80 or Titan-X GPUs please use an older cuda version.
+  0%|          | 0/2 [00:00<?, ?it/s]Loading test dataset:   0%|          | 0/2 [00:00<?, ?it/s]Loading test dataset: 100%|██████████| 2/2 [00:00<00:00, 474.50it/s]
+  0%|          | 0/2 [00:00<?, ?it/s]Loading training dataset:   0%|          | 0/2 [00:00<?, ?it/s]Loading training dataset:  50%|█████     | 1/2 [00:05<00:05,  5.57s/it]Loading training dataset: 100%|██████████| 2/2 [00:09<00:00,  4.81s/it]Loading training dataset: 100%|██████████| 2/2 [00:09<00:00,  4.92s/it]
+  0%|          | 0/2 [00:00<?, ?it/s] 50%|█████     | 1/2 [00:04<00:04,  4.37s/it]100%|██████████| 2/2 [00:08<00:00,  4.28s/it]100%|██████████| 2/2 [00:08<00:00,  4.29s/it]
+Traceback (most recent call last):
+  File "/exports/eddie/scratch/s2497456/workdir/RetrofittingLLM/./gpt2.py", line 254, in <module>
+    load_weights(model, f"output/{model.__class__.__name__}.params", "gpt2")
+  File "/exports/eddie/scratch/s2497456/workdir/RetrofittingLLM/./gpt2.py", line 32, in load_weights
+    state_dict = torch.load(pth)[model_name]["model_state_dict"]
+  File "/home/s2497456/mnt/workdir/run/lib/python3.10/site-packages/torch/serialization.py", line 998, in load
+    with _open_file_like(f, 'rb') as opened_file:
+  File "/home/s2497456/mnt/workdir/run/lib/python3.10/site-packages/torch/serialization.py", line 445, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+  File "/home/s2497456/mnt/workdir/run/lib/python3.10/site-packages/torch/serialization.py", line 426, in __init__
+    super().__init__(open(name, mode))
+FileNotFoundError: [Errno 2] No such file or directory: 'output/GPT2LMHeadModel.params'

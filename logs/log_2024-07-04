@@ -1,0 +1,2 @@
+{'loss': 6.8247, 'learning_rate': 0.0004, 'epoch': 0.01, 'train_perplexity': 920.3002725516606}
+{'eval_loss': 5.699010848999023, 'eval_runtime': 6.6298, 'eval_samples_per_second': 150.833, 'eval_steps_per_second': 4.827, 'epoch': 0.01, 'eval_perplexity': 298.57192213891557}
