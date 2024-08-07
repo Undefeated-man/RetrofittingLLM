@@ -1,16 +1,18 @@
-from transformerlib import TrainerCallback, AutoTokenizer, set_seed, AdamW, DataCollatorForLanguageModeling, Trainer, TrainingArguments, TrainerState
+from transformerlib import TrainerCallback, AutoTokenizer, set_seed, AdamW, DataCollatorWithPadding, DataCollatorForLanguageModeling, Trainer, TrainingArguments, TrainerState
 from torch.utils.data import DataLoader
-# from datasets.iterable_dataset import IterableDataset
+from datasets.iterable_dataset import IterableDataset
 from datasets import load_dataset, Dataset
 from torch.cuda.amp import autocast, GradScaler
 from torch.nn import DataParallel
 from torch.cuda import device_count
 from collections import OrderedDict
+from functools import wraps
 # from accelerate import Accelerator
 from numpy import mean, exp
-from torch import cuda
+from torch import cuda, nn
 from utils import *
 
+import numpy as np
 import config as args
 import datetime
 import tqdm
@@ -179,23 +181,88 @@ class CustomCallback(TrainerCallback):
         except Exception as e:
             print("Error: %s"%e)
         print(logs)
-        with open(f"./logs/log_{formatted_date}", "a") as f:
+        with open(f"./logs/log_{formatted_date}_{model_name}", "a") as f:
             f.write(str(logs) + "\n")
         
 
-class CustomTrainer(Trainer):
-    def save_model(self, output_dir=None, _internal_call=False):
-        if output_dir is None:
-            output_dir = self.args.output_dir
 
-        self.model.lm_head.weight = torch.nn.Parameter(self.model.transformer.wte.weight.clone())
-        self.model.save_pretrained(output_dir)
-        torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
-        self.state.save_to_json(os.path.join(output_dir, "trainer_state.json"))
-        # super().save_model(f"{output_dir}/{self.model.__class__.__name__}.param", _internal_call=_internal_call)
-        self.model.lm_head.weight = self.model.transformer.wte.weight
+if args.tuning_mode:
+    class CustomTrainer(Trainer):
+        def save_model(self, output_dir=None, _internal_call=False):
+            if output_dir is None:
+                output_dir = self.args.output_dir
+
+            # self.model.lm_head.weight = torch.nn.Parameter(self.model.transformer.wte.weight.clone())
+            self.model.save_pretrained(output_dir)
+            torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
+            self.state.save_to_json(os.path.join(output_dir, "trainer_state.json"))
+            # super().save_model(f"{output_dir}/{self.model.__class__.__name__}.param", _internal_call=_internal_call)
+            # self.model.lm_head.weight = self.model.transformer.wte.weight
+            
+        def compute_loss(self, model, inputs, return_outputs=False):
+            """For QA task"""
+            start_positions = inputs.pop("start_positions")
+            end_positions = inputs.pop("end_positions")
+            
+            # 获取模型输出
+            outputs = model(**inputs)
+            start_logits = outputs.start_logits
+            end_logits = outputs.end_logits
+            
+            # 计算损失
+            loss_fct = nn.CrossEntropyLoss()
+            start_loss = loss_fct(start_logits, start_positions)
+            end_loss = loss_fct(end_logits, end_positions)
+            loss = (start_loss + end_loss) / 2
+            return (loss, outputs) if return_outputs else loss
+else:
+    class CustomTrainer(Trainer):
+        def save_model(self, output_dir=None, _internal_call=False):
+            if output_dir is None:
+                output_dir = self.args.output_dir
+
+            # self.model.lm_head.weight = torch.nn.Parameter(self.model.transformer.wte.weight.clone())
+            self.model.save_pretrained(output_dir)
+            torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
+            self.state.save_to_json(os.path.join(output_dir, "trainer_state.json"))
+            # super().save_model(f"{output_dir}/{self.model.__class__.__name__}.param", _internal_call=_internal_call)
+            # self.model.lm_head.weight = self.model.transformer.wte.weight
+    
+    # def training_step(self, model, inputs):
+    #     model.train()
+    #     inputs = self._prepare_inputs(inputs)
+    #     start_positions = inputs.pop("start_positions")
+    #     end_positions = inputs.pop("end_positions")
+    #     outputs = model(**inputs)
+    #     start_logits = outputs.start_logits
+    #     end_logits = outputs.end_logits
+
+    #     # Compute the loss using start and end positions
+    #     loss_fct = torch.nn.CrossEntropyLoss()
+    #     start_loss = loss_fct(start_logits, start_positions)
+    #     end_loss = loss_fct(end_logits, end_positions)
+    #     loss = (start_loss + end_loss) / 2
+
+    #     loss.backward()
+    #     return loss.detach()
 
 
+def process_with_retry(func, retries=3, delay=60, **kwargs):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        for attempt in range(retries):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                print(f"Attempt {attempt + 1} failed: {e}")
+                if attempt < retries - 1:
+                    time.sleep(delay)  # 等待一段时间再重试
+                else:
+                    raise e  # 超过最大重试次数，抛出异常
+    return wrapper
+
+
+@process_with_retry
 def preprocess_function(examples):
     return tokenizer(examples['text'], truncation=True, padding='max_length', max_length=args.max_input_length)
 
@@ -206,7 +273,8 @@ def sliding_window(text, max_length=1024, overlap=50):
     token_blocks = [tokens[i:i+max_length] for i in range(0, len(tokens), stride) if i+max_length <= len(tokens)]
     return token_blocks
 
-    
+
+@process_with_retry
 def prepare_eval(samples, batch_size):
     res = []
     ans = []
@@ -224,6 +292,7 @@ def prepare_eval(samples, batch_size):
         batch_index += batch_size
 
 
+@process_with_retry
 def instruct(samples):
     """
         Instruct the model to generate the text
@@ -261,41 +330,180 @@ def clean(text):
     return text.strip()
 
 
+@process_with_retry
+def prepare_qa_dataset(examples):
+    contexts = examples['story']
+    questions_list = examples['questions']
+    answers_list = examples['answers']
+
+    input_ids = []
+    attention_masks = []
+    start_positions = []
+    end_positions = []
+
+    for context, questions, answers in zip(contexts, questions_list, answers_list):
+        for question, start, end in zip(questions, answers['answer_start'], answers['answer_end']):
+            # Tokenize the pair of context and question
+            inputs = tokenizer(question, context, truncation=True, padding="max_length", \
+                max_length=args.max_input_length - 50, return_offsets_mapping=True)
+            
+            input_ids.append(inputs['input_ids'])
+            attention_masks.append(inputs['attention_mask'])
+
+            # Determine the start and end positions
+            offset_mapping = inputs['offset_mapping']
+            start_position = None
+            end_position = None
+            
+            for idx, (start_offset, end_offset) in enumerate(offset_mapping):
+                if start_offset <= start < end_offset:
+                    start_position = idx
+                if start_offset < end <= end_offset:
+                    end_position = idx
+                    break
+
+            if start_position is not None and end_position is not None:
+                start_positions.append(start_position)
+                end_positions.append(end_position)
+            else:
+                start_positions.append(0)
+                end_positions.append(0)
+    
+    output = {
+        'input_ids': input_ids,
+        'attention_mask': attention_masks,
+        'start_positions': start_positions,
+        'end_positions': end_positions
+    }
+    
+    return output
+
+
+def compute_qa_metrics(p):
+    start_preds = np.argmax(p.predictions[0], axis=1)
+    end_preds = np.argmax(p.predictions[1], axis=1)
+    start_labels = p.label_ids[0]
+    end_labels = p.label_ids[1]
+
+    start_accuracy = np.mean(start_preds == start_labels)
+    end_accuracy = np.mean(end_preds == end_labels)
+
+    return {
+        "start_accuracy": start_accuracy,
+        "end_accuracy": end_accuracy,
+        "accuracy": (start_accuracy + end_accuracy) / 2,
+    }
+
+class SkipIterableDataset(IterableDataset):
+    def __init__(self, dataset, skip_n=None):
+        self.dataset = dataset
+        self.__iter__(skip_n=skip_n)
+
+    def __iter__(self, skip_n=None):
+        iterator = iter(self.dataset)
+        if not skip_n is None:
+            for _ in range(skip_n):
+                next(iterator, None)  # 跳过前 n 个样本
+        return iterator
+
+
+# def prepare_qa_dataset(examples):
+#     context = examples['story']
+#     questions_list = examples['questions']
+#     answers_list = examples['answers']
+
+#     input_ids = []
+#     attention_masks = []
+#     start_positions = []
+#     end_positions = []
+
+#     for question, start, end in zip(questions_list, answers_list['answer_start'], answers_list['answer_end']):
+#         # Tokenize the pair of context and question
+#         inputs = tokenizer(question, context, truncation=True, padding="max_length", \
+#             max_length=args.max_input_length - 50, return_offsets_mapping=True)
+        
+#         input_ids.append(inputs['input_ids'])
+#         attention_masks.append(inputs['attention_mask'])
+
+#         # Determine the start and end positions
+#         offset_mapping = inputs['offset_mapping']
+#         start_position = None
+#         end_position = None
+        
+#         for idx, (start_offset, end_offset) in enumerate(offset_mapping):
+#             if start_offset <= start < end_offset:
+#                 start_position = idx
+#             if start_offset < end <= end_offset:
+#                 end_position = idx
+#                 break
+
+#         if start_position is not None and end_position is not None:
+#             start_positions.append(start_position)
+#             end_positions.append(end_position)
+#         else:
+#             start_positions.append(0)
+#             end_positions.append(0)
+    
+#     output = {
+#         'input_ids': input_ids,
+#         'attention_mask': attention_masks,
+#         'start_positions': start_positions,
+#         'end_positions': end_positions
+#     }
+#     print(len(input_ids), len(attention_masks), len(start_positions), len(end_positions))
+#     return output
+
+
 if __name__ == "__main__":
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name) #, cache_dir=cache_dir)
-    model = get_model(args)
+    # tokenizer = AutoTokenizer.from_pretrained(args.model_name) #, cache_dir=cache_dir)
+    tokenizer, model = get_model(args)
     tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.pad_token_id = tokenizer.eos_token_id
+    model_name = args.model_name
     set_seed(37)
 
     #############################
     if args.tuning_mode:
-        dataset = load_dataset(args.tuning_set, "all")
+        print(f"\nTuning on: {args.tuning_set}")
+        dataset = load_dataset(args.tuning_set)
         # split the dataset into train and validation
         # train_idx = int(len(dataset) * 0.9)
-        train_dataset = dataset["auxiliary_train"]  # [:train_idx]  auxiliary_train
+        train_dataset = dataset["train"]  # [:train_idx]  auxiliary_train
         valid_dataset = dataset["validation"]  # [train_idx:]
         # train_dataset = Dataset.from_dict(train_dataset)
         # valid_dataset = Dataset.from_dict(valid_dataset)
-        tokenized_train_dataset = train_dataset.map(instruct, batched=True)
-        tokenized_valid_dataset = valid_dataset.map(instruct, batched=True)
+        
+        try:
+            tokenized_train_dataset = Dataset.from_dict(prepare_qa_dataset(train_dataset))
+            tokenized_valid_dataset = Dataset.from_dict(prepare_qa_dataset(valid_dataset))
+        except:
+            tokenized_train_dataset = train_dataset.map(prepare_qa_dataset)
+            tokenized_valid_dataset = valid_dataset.map(prepare_qa_dataset)
     else:
+        print(f"\nPretraining on: {args.dataset}")
         dataset = load_dataset(args.dataset, streaming=True)
         train_dataset = dataset["train"] #load_dataset(args.dataset, split="train", streaming=True)
-        valid_dataset = dataset["validation"] #load_dataset(args.dataset, split="validation", streaming=True)
+        valid_dataset = dataset["validation"] # load_dataset(args.dataset, split="validation", streaming=True)
         valid_dataset = Dataset.from_dict({"text": get_subset(valid_dataset, args.eval_sample)})
         tokenized_train_dataset = train_dataset.map(preprocess_function, batched=True)
         tokenized_valid_dataset = valid_dataset.map(preprocess_function, batched=True)
     
-    data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
+    if args.tuning_mode:
+        data_collator = DataCollatorWithPadding(tokenizer)
+    else:
+        data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
+        
+    print("Process the dataset successfully!")
     training_args = TrainingArguments(
                     output_dir='./results',          # 输出目录
                     evaluation_strategy="steps",
                     lr_scheduler_type="cosine",
                     eval_steps=args.eval_steps,
+                    logging_steps=args.eval_steps,
+                    logging_first_step=True,
                     overwrite_output_dir=True,
-                    num_train_epochs=args.epochs,              # 训练轮数
                     per_device_train_batch_size=args.batch_size,   # 每个设备的批次大小
-                    per_device_eval_batch_size=args.batch_size * 4,
+                    per_device_eval_batch_size=args.eval_batch_size,
                     save_total_limit=2,              # 保存模型的总数限制
                     logging_dir=args.log_dir,
                     learning_rate=args.learning_rate,
@@ -312,24 +520,39 @@ if __name__ == "__main__":
                     save_steps = args.save_steps
                 )
     
-    trainer = CustomTrainer(
+    if args.tuning_mode:
+        trainer = CustomTrainer(
                         model=model,
                         args=training_args,
                         data_collator=data_collator,
                         train_dataset=tokenized_train_dataset,
                         eval_dataset=tokenized_valid_dataset,
+                        tokenizer=tokenizer,
+                        compute_metrics=compute_qa_metrics,
                         callbacks=[CustomCallback()]
                     )
+    else:
+        trainer = CustomTrainer(
+                            model=model,
+                            args=training_args,
+                            data_collator=data_collator,
+                            train_dataset=tokenized_train_dataset,
+                            eval_dataset=tokenized_valid_dataset,
+                            tokenizer=tokenizer,
+                            callbacks=[CustomCallback()]
+                        )
     
     if args.checkpoint_dir:
         trainer_state = TrainerState.load_from_json(os.path.join(args.checkpoint_dir, 'trainer_state.json'))
         trainer.state = trainer_state
     
-    try:
-        trainer.train()
-    except Exception as e:
-        print("Error: %s"%e)
-        trainer.save_model()
+    trainer.train()
+    # try:
+    #     trainer.train()
+    #     trainer.save_model()
+    # except Exception as e:
+    #    print("Error: %s"%e)
+    #    trainer.save_model()
     trainer.evaluate()
     ##########################################################
     
@@ -339,49 +562,50 @@ if __name__ == "__main__":
     # val_dataloader = None
     # ---------------------------------------------------------- #
     
-    del trainer
-    del tokenized_train_dataset
-    del train_dataset
-    cuda.empty_cache()
-    
-    # Output an example to see the result
-    device = torch.device("cuda")
-    if args.tuning_mode:
-        from sklearn.metrics import accuracy_score
-        pred = []
-        gt = []
-        cnt = 0
-        choices = ["A", "B", "C", "D"]
-        with tqdm.tqdm(total=round(len(valid_dataset)/args.batch_size/6)) as pbar:
+    if args.evalute_after_train:
+        del trainer
+        del tokenized_train_dataset
+        del train_dataset
+        cuda.empty_cache()
+        
+        # Output an example to see the result
+        device = torch.device("cuda")
+        if args.tuning_mode:
+            from sklearn.metrics import accuracy_score
+            pred = []
+            gt = []
+            cnt = 0
+            choices = ["A", "B", "C", "D"]
+            with tqdm.tqdm(total=round(len(valid_dataset)/args.batch_size/6)) as pbar:
+                model.to(device)
+                model.eval()
+                for samples, answers in prepare_eval(valid_dataset, args.batch_size*6):
+                    samples = {key: value.to(device) for key, value in samples.items()}
+                    generated = model.generate(**samples, repetition_penalty=1.2, max_new_tokens=5)
+                    for sample, answer in zip(generated, answers):
+                        p = tokenizer.decode(sample.cpu().numpy(), skip_special_tokens=True).replace("\n", " ")
+                        if "<answer>" in p:
+                            p = p.split("<answer>")[1]
+                        else:
+                            p = "E"
+                        pred.append(clean(p))
+                        gt.append(answer)
+                        if choices[gt[-1]] in pred[-1]:
+                            cnt += 1
+                    pbar.update(1)
+            with open("output/pred.txt", "w") as f:
+                f.write("\n".join([p for p in pred]))
+            with open("output/gt.txt", "w") as f:
+                f.write("\n".join([str(i) for i in gt]))
+            print(len(pred) == len(gt))
+            print(f"The accuracy of validation set is: {cnt/len(gt)*100}%")
+            # print(f"The accuracy of validation set is: {accuracy_score(gt, pred) * 100}%")
+        else:
+            inputs = tokenizer("Tom is", return_tensors='pt')
+            inputs = {key: value.to(device) for key, value in inputs.items()}
+            print("Input: Tom is\nOutput:")
             model.to(device)
             model.eval()
-            for samples, answers in prepare_eval(valid_dataset, args.batch_size*6):
-                samples = {key: value.to(device) for key, value in samples.items()}
-                generated = model.generate(**samples, repetition_penalty=1.2, max_new_tokens=5)
-                for sample, answer in zip(generated, answers):
-                    p = tokenizer.decode(sample.cpu().numpy(), skip_special_tokens=True).replace("\n", " ")
-                    if "<answer>" in p:
-                        p = p.split("<answer>")[1]
-                    else:
-                        p = "E"
-                    pred.append(clean(p))
-                    gt.append(answer)
-                    if choices[gt[-1]] in pred[-1]:
-                        cnt += 1
-                pbar.update(1)
-        with open("output/pred.txt", "w") as f:
-            f.write("\n".join([p for p in pred]))
-        with open("output/gt.txt", "w") as f:
-            f.write("\n".join([str(i) for i in gt]))
-        print(len(pred) == len(gt))
-        print(f"The accuracy of validation set is: {cnt/len(gt)*100}%")
-        # print(f"The accuracy of validation set is: {accuracy_score(gt, pred) * 100}%")
-    else:
-        inputs = tokenizer("Tom is", return_tensors='pt')
-        inputs = {key: value.to(device) for key, value in inputs.items()}
-        print("Input: Tom is\nOutput:")
-        model.to(device)
-        model.eval()
-        generated = model.generate(**inputs, repetition_penalty=1.2, max_new_tokens=100)[0]
-        print(tokenizer.decode(generated.cpu().numpy(), skip_special_tokens=True))    
+            generated = model.generate(**inputs, repetition_penalty=1.2, max_new_tokens=100)[0]
+            print(tokenizer.decode(generated.cpu().numpy(), skip_special_tokens=True))    
     

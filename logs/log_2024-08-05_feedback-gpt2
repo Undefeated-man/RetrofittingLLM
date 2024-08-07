@@ -1,0 +1,1 @@
+{'loss': 10.9519, 'grad_norm': 3.531468629837036, 'learning_rate': 1e-05, 'epoch': 2.5e-05, 'train_perplexity': 57062.360919608436}

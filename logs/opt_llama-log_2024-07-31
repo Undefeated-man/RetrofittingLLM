@@ -1,0 +1,2 @@
+{'loss': 2.5725, 'grad_norm': 0.1257319152355194, 'learning_rate': 3.184512957628674e-05, 'epoch': 0.42528735632183906, 'train_perplexity': 13.098529866785132}
+{'eval_loss': 2.5638134479522705, 'eval_runtime': 1.1055, 'eval_samples_per_second': 90.46, 'eval_steps_per_second': 6.332, 'epoch': 0.42528735632183906, 'eval_perplexity': 12.985241560092545}

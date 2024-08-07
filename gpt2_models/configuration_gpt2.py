@@ -22,7 +22,7 @@ from transformers.models.gpt2.configuration_gpt2 import GPT2Config as _GPT2Confi
 
 class OptGPT2Config(_GPT2Config):
 
-    model_type = "opt-gpt2"
+    model_type = "feedback-gpt2"
 
     def __init__(
         self,

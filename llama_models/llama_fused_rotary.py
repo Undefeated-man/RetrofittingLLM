@@ -1,11 +1,15 @@
 from flash_attn.layers.rotary import apply_rotary_emb
 
 import torch
+# from typing import List, Optional, Tuple, Union
+# from einops import rearrange, repeat
 from transformers.models.llama.modeling_llama import (
     LlamaRotaryEmbedding as _LlamaRotaryEmbedding,
     LlamaLinearScalingRotaryEmbedding as _LlamaLinearScalingRotaryEmbedding,
     LlamaDynamicNTKScalingRotaryEmbedding as _LlamaDynamicNTKScalingRotaryEmbedding,
 )
+
+
 
 class LlamaRotaryEmbedding(_LlamaRotaryEmbedding):
 

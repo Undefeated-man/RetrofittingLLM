@@ -9,4 +9,4 @@ pip install scikit-learn
 pip install deepspeed
 
 apt update
-apt install -y vim screen
+apt install -y vim screen git

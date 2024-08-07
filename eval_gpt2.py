@@ -7,6 +7,7 @@ from torch import cuda
 from utils import *
 from dataclasses import dataclass
 
+import numpy as np
 import config as args
 import datetime
 import tqdm
@@ -183,13 +184,75 @@ def generate(model, input_ids, max_new_tokens=30, past_key_values=None):
             break
     return input_ids.cpu().numpy(), past_key_values
     
+def prepare_qa_dataset(examples):
+    contexts = examples['story']
+    questions_list = examples['questions']
+    answers_list = examples['answers']
+
+    input_ids = []
+    attention_masks = []
+    start_positions = []
+    end_positions = []
+
+    for context, questions, answers in zip(contexts, questions_list, answers_list):
+        for question, start, end in zip(questions, answers['answer_start'], answers['answer_end']):
+            # Tokenize the pair of context and question
+            inputs = tokenizer(question, context, truncation=True, padding="max_length", \
+                max_length=args.max_input_length - 50, return_offsets_mapping=True)
+            
+            input_ids.append(inputs['input_ids'])
+            attention_masks.append(inputs['attention_mask'])
+
+            # Determine the start and end positions
+            offset_mapping = inputs['offset_mapping']
+            start_position = None
+            end_position = None
+            
+            for idx, (start_offset, end_offset) in enumerate(offset_mapping):
+                if start_offset <= start < end_offset:
+                    start_position = idx
+                if start_offset < end <= end_offset:
+                    end_position = idx
+                    break
+
+            if start_position is not None and end_position is not None:
+                start_positions.append(start_position)
+                end_positions.append(end_position)
+            else:
+                start_positions.append(0)
+                end_positions.append(0)
+    
+    output = {
+        'input_ids': input_ids,
+        'attention_mask': attention_masks,
+        'start_positions': start_positions,
+        'end_positions': end_positions
+    }
+    return output
+
+
+def compute_qa_metrics(p):
+    start_preds = np.argmax(p.predictions[0], axis=1)
+    end_preds = np.argmax(p.predictions[1], axis=1)
+    start_labels = p.label_ids[0]
+    end_labels = p.label_ids[1]
+
+    start_accuracy = np.mean(start_preds == start_labels)
+    end_accuracy = np.mean(end_preds == end_labels)
+
+    return {
+        "start_accuracy": start_accuracy,
+        "end_accuracy": end_accuracy,
+        "accuracy": (start_accuracy + end_accuracy) / 2,
+    }
 
 
 if __name__ == "__main__":
     tokenizer = AutoTokenizer.from_pretrained(args.model_name) #, cache_dir=cache_dir)
     model = get_model(args)
-    tokenizer.pad_token = tokenizer.eos_token
-    tokenizer.pad_token_id = tokenizer.eos_token_id
+    if args.eval_dataset != "stanfordnlp/coqa":
+        tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.pad_token_id = tokenizer.eos_token_id
     set_seed(37)
 
     #############################
@@ -234,12 +297,11 @@ if __name__ == "__main__":
     elif q_type == "TF":
         raise NotImplementedError
     elif q_type == "QA":
+        tokenized_valid_dataset = Dataset.from_dict(prepare_qa_dataset(valid_dataset))
         pred = []
         gt = []
         cnt = 0
-        questions = valid_dataset["questions"]
-        answers = valid_dataset["answers"]
-        stories = valid_dataset["story"]
+        
         with tqdm.tqdm(total=len(valid_dataset)) as pbar:
             for i in range(len(stories)):
                 pbar.update(1)

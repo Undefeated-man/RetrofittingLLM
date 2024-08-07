@@ -32,7 +32,13 @@ from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
 
 from transformers.activations import ACT2FN
 # from transformers.modeling_attn_mask_utils import AttentionMaskConverter, _prepare_4d_causal_attention_mask
-from transformers.modeling_outputs import BaseModelOutputWithPast, CausalLMOutputWithPast, SequenceClassifierOutputWithPast
+from transformers.modeling_outputs import (
+    BaseModelOutputWithPast, 
+    CausalLMOutputWithPast, 
+    QuestionAnsweringModelOutput,
+    SequenceClassifierOutputWithPast
+)
+from transformers.cache_utils import Cache
 from transformers.modeling_utils import PreTrainedModel
 from transformers.utils import (
     add_start_docstrings,
@@ -48,6 +54,7 @@ from transformers.models.llama.modeling_llama import (
     LlamaDecoderLayer as _LlamaDecoderLayer,
     LlamaAttention as _LlamaAttention,
     LlamaFlashAttention2 as _LlamaFlashAttention2,
+    LlamaForQuestionAnswering as _LlamaForQuestionAnswering,
     # _prepare_4d_causal_attention_mask,
     LlamaMLP,
     LlamaRMSNorm,
@@ -68,6 +75,7 @@ def _prepare_4d_causal_attention_mask(input_mask, cfg, input_embed, past_key_val
     input_embed: [batch_size, sequence_length, embed_dim]
     returns: [batch_size, 1, total_length, total_length]
     """
+    device = input_mask.device
     batch_size, sequence_length = cfg
     # batch_size, sequence_length = input_mask.size()
     total_length = past_key_values_length + sequence_length
@@ -76,7 +84,7 @@ def _prepare_4d_causal_attention_mask(input_mask, cfg, input_embed, past_key_val
     expanded_mask = input_mask[:, None, None, :]  # Shape: [batch_size, 1, 1, sequence_length]
 
     # Step 2: Generate causal mask
-    causal_mask = torch.tril(torch.ones((total_length, total_length), dtype=torch.uint8))  # Shape: [total_length, total_length]
+    causal_mask = torch.tril(torch.ones((total_length, total_length), dtype=torch.uint8)).to(device)  # Shape: [total_length, total_length]
     
     # Step 3: Combine masks
     if past_key_values_length > 0:
@@ -90,8 +98,11 @@ def _prepare_4d_causal_attention_mask(input_mask, cfg, input_embed, past_key_val
     return causal_attention_mask
 
 def apply_rotary_pos_emb_q(q, cos, sin, position_ids, unsqueeze_dim=1):
-    cos = cos[position_ids].unsqueeze(unsqueeze_dim)
-    sin = sin[position_ids].unsqueeze(unsqueeze_dim)
+    # cos = cos[position_ids].unsqueeze(unsqueeze_dim)
+    # sin = sin[position_ids].unsqueeze(unsqueeze_dim)
+    cos = cos.unsqueeze(unsqueeze_dim)
+    sin = sin.unsqueeze(unsqueeze_dim)
+    # print(f"q: {q.shape}; cos: {cos.shape}; sin: {sin.shape}")
     q_embed = (q * cos) + (rotate_half(q) * sin)
     return q_embed
 
@@ -148,8 +159,11 @@ class LlamaAttentionBase(_LlamaAttention):
         kv_seq_len = key_states.shape[-2]
         if past_key_value is not None:
             kv_seq_len += past_key_value[0].shape[-2]
-        cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
-        query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, position_ids)
+            
+        cos, sin = self.rotary_emb(value_states, position_ids)
+        query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, None)
+        # cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
+        # query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, position_ids)
 
         if past_key_value is not None:
             # reuse k, v, self_attention
@@ -401,9 +415,11 @@ class LlamaFlashAttention2Base(_LlamaFlashAttention2):
         if past_key_value is not None:
             kv_seq_len += past_key_value[0].shape[-2]
 
-        cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
-
-        query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, position_ids)
+        # print(value_states.shape)
+        cos, sin = self.rotary_emb(value_states, position_ids)
+        query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin)
+        # cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
+        # query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, position_ids)
         
         if past_key_value is not None:
             # reuse k, v, self_attention
@@ -708,7 +724,9 @@ class LlamaAttention(LlamaAttentionBase):
         key_states, value_states = encoder_outputs
 
         kv_seq_len = key_states.shape[-2]
-        cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
+        # print(value_states.shape)
+        # cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
+        cos, sin = self.rotary_emb(value_states, position_ids)
         query_states = apply_rotary_pos_emb_q(query_states, cos, sin, position_ids)
 
         if use_cache:
@@ -747,7 +765,8 @@ class LlamaAttention(LlamaAttentionBase):
         kv_seq_len = key_states.shape[-2]
         if past_key_value is not None:
             kv_seq_len += past_key_value[0].shape[-2]
-        cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
+        # cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
+        cos, sin = self.rotary_emb(value_states, position_ids)
         query_states = apply_rotary_pos_emb_q(query_states, cos, sin, position_ids)
 
         if past_key_value is not None:
@@ -760,7 +779,8 @@ class LlamaAttention(LlamaAttentionBase):
             _value_states = self.v_proj(hidden_states)
             _key_states = _key_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
             _value_states = _value_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
-            cos, sin = self.rotary_emb(_value_states, seq_len=kv_seq_len)
+            # cos, sin = self.rotary_emb(_value_states, seq_len=kv_seq_len)
+            cos, sin = self.rotary_emb(value_states, position_ids)
             _key_states = apply_rotary_pos_emb_q(_key_states, cos, sin, position_ids)
             past_key_value = (_key_states, _value_states)
         else:
@@ -849,7 +869,8 @@ class LlamaFlashAttention2(LlamaFlashAttention2Base):
         key_states, value_states = encoder_outputs
 
         kv_seq_len = key_states.shape[-2]
-        cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
+        # cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
+        cos, sin = self.rotary_emb(value_states, position_ids)
         query_states = apply_rotary_pos_emb_q(query_states, cos, sin, position_ids)
 
         if use_cache:
@@ -888,7 +909,8 @@ class LlamaFlashAttention2(LlamaFlashAttention2Base):
         kv_seq_len = key_states.shape[-2]
         if past_key_value is not None:
             kv_seq_len += past_key_value[0].shape[-2]
-        cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
+        # cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
+        cos, sin = self.rotary_emb(value_states, position_ids)
         query_states = apply_rotary_pos_emb_q(query_states, cos, sin, position_ids)
 
         if past_key_value is not None:
@@ -901,7 +923,8 @@ class LlamaFlashAttention2(LlamaFlashAttention2Base):
             _value_states = self.v_proj(hidden_states)
             _key_states = _key_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
             _value_states = _value_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
-            cos, sin = self.rotary_emb(_value_states, seq_len=kv_seq_len)
+            # cos, sin = self.rotary_emb(_value_states, seq_len=kv_seq_len)
+            cos, sin = self.rotary_emb(_value_states, position_ids)
             _key_states = apply_rotary_pos_emb_q(_key_states, cos, sin, position_ids)
             past_key_value = (_key_states, _value_states)
         else:
@@ -954,7 +977,8 @@ class LlamaAttentionMiddle(LlamaAttention):
         kv_seq_len = q_len
         if past_key_value is not None:
             kv_seq_len += past_key_value[0].shape[-2]
-        cos, sin = self.rotary_emb(query_states, seq_len=kv_seq_len)
+        # cos, sin = self.rotary_emb(query_states, seq_len=kv_seq_len)
+        cos, sin = self.rotary_emb(query_states, position_ids)
         query_states = apply_rotary_pos_emb_q(query_states, cos, sin, position_ids)
 
         if past_key_value is not None:
@@ -986,7 +1010,8 @@ class LlamaAttentionMiddle(LlamaAttention):
         key_states, value_states = encoder_outputs
 
         kv_seq_len = key_states.shape[-2]
-        cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
+        # cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
+        cos, sin = self.rotary_emb(value_states, position_ids)
         query_states = apply_rotary_pos_emb_q(query_states, cos, sin, position_ids)
 
         past_key_value = None
@@ -1017,7 +1042,8 @@ class LlamaAttentionMiddle(LlamaAttention):
         kv_seq_len = key_states.shape[-2]
         if past_key_value is not None:
             kv_seq_len += past_key_value[0].shape[-2]
-        cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
+        # cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
+        cos, sin = self.rotary_emb(value_states, position_ids)
         query_states = apply_rotary_pos_emb_q(query_states, cos, sin, position_ids)
 
         if past_key_value is not None:
@@ -1074,7 +1100,8 @@ class LlamaFlashAttention2Middle(LlamaFlashAttention2):
         kv_seq_len = q_len
         if past_key_value is not None:
             kv_seq_len += past_key_value[0].shape[-2]
-        cos, sin = self.rotary_emb(query_states, seq_len=kv_seq_len)
+        # cos, sin = self.rotary_emb(query_states, seq_len=kv_seq_len)
+        cos, sin = self.rotary_emb(query_states, position_ids)
         query_states = apply_rotary_pos_emb_q(query_states, cos, sin, position_ids)
 
         if past_key_value is not None:
@@ -1106,7 +1133,8 @@ class LlamaFlashAttention2Middle(LlamaFlashAttention2):
         key_states, value_states = encoder_outputs
 
         kv_seq_len = key_states.shape[-2]
-        cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
+        # cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
+        cos, sin = self.rotary_emb(query_states, position_ids)
         query_states = apply_rotary_pos_emb_q(query_states, cos, sin, position_ids)
 
         past_key_value = None
@@ -1137,7 +1165,8 @@ class LlamaFlashAttention2Middle(LlamaFlashAttention2):
         kv_seq_len = key_states.shape[-2]
         if past_key_value is not None:
             kv_seq_len += past_key_value[0].shape[-2]
-        cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
+        # cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
+        cos, sin = self.rotary_emb(query_states, position_ids)
         query_states = apply_rotary_pos_emb_q(query_states, cos, sin, position_ids)
 
         if past_key_value is not None:
@@ -2027,3 +2056,665 @@ class LlamaForCausalLM(_LlamaForCausalLM):
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
         )
+
+
+class LlamaForQuestionAnswering(_LlamaForQuestionAnswering):
+    config_class = OptLlamaConfig
+    base_model_prefix = "transformer"
+
+    def __init__(self, config):
+        super(_LlamaForQuestionAnswering, self).__init__(config)
+        self.model = LlamaModel(config)
+        self.qa_outputs = nn.Linear(config.hidden_size, 2)
+
+        # Initialize weights and apply final processing
+        self.post_init()
+
+    def get_input_embeddings(self):
+        return self.transformer.embed_tokens
+
+    def set_input_embeddings(self, value):
+        self.transformer.embed_tokens = value
+
+    def forward(
+        self,
+        input_ids: torch.LongTensor = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        position_ids: Optional[torch.LongTensor] = None,
+        past_key_values: Optional[List[torch.FloatTensor]] = None,
+        inputs_embeds: Optional[torch.FloatTensor] = None,
+        start_positions: Optional[torch.LongTensor] = None,
+        end_positions: Optional[torch.LongTensor] = None,
+        use_cache: Optional[bool] = None,
+        output_attentions: Optional[bool] = None,
+        output_hidden_states: Optional[bool] = None,
+        return_dict: Optional[bool] = None,
+    ) -> Union[Tuple, QuestionAnsweringModelOutput]:
+        r"""
+        Args:
+            labels (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
+                Labels for computing the masked language modeling loss. Indices should either be in `[0, ...,
+                config.vocab_size]` or -100 (see `input_ids` docstring). Tokens with indices set to `-100` are ignored
+                (masked), the loss is only computed for the tokens with labels in `[0, ..., config.vocab_size]`.
+
+        Returns:
+
+        Example:
+
+        ```python
+        >>> from transformers import AutoTokenizer, LlamaForCausalLM
+
+        >>> model = LlamaForCausalLM.from_pretrained(PATH_TO_CONVERTED_WEIGHTS)
+        >>> tokenizer = AutoTokenizer.from_pretrained(PATH_TO_CONVERTED_TOKENIZER)
+
+        >>> prompt = "Hey, are you conscious? Can you talk to me?"
+        >>> inputs = tokenizer(prompt, return_tensors="pt")
+
+        >>> # Generate
+        >>> generate_ids = model.generate(inputs.input_ids, max_length=30)
+        >>> tokenizer.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+        "Hey, are you conscious? Can you talk to me?\nI'm not conscious, but I can talk to you."
+        ```"""
+
+        output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
+        output_hidden_states = (
+            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
+        )
+        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+
+        assert past_key_values is None, "past_key_values is not supported for training."
+        assert not use_cache, "use_cache is not supported for training."
+
+        # initialize kv w/ zero
+        bsz, q_len = input_ids.size()
+        zero_states = torch.zeros(bsz, self.config.num_key_value_heads, q_len, self.config.hidden_size // self.config.num_attention_heads, device=input_ids.device, dtype=self.dtype)
+        encoder_outputs = (None, (zero_states, zero_states))
+
+        # pre-compute hidden states cache
+        encoder_outputs = self.model(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+            past_key_values=past_key_values,
+            encoder_outputs=encoder_outputs,
+            inputs_embeds=inputs_embeds,
+            use_cache="head-only",
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=True, # we want to retrive the past_key_values
+        )
+        
+        for i in range(self.config.num_encoders):
+            
+            context = torch.no_grad() if i < self.config.num_encoders - self.config.num_trained_encoders else dummy_context
+
+            with context:
+                # decoder outputs consists of (dec_features, layer_state, dec_hidden, dec_attn)
+                encoder_outputs = self.model(
+                    input_ids=input_ids,
+                    attention_mask=attention_mask,
+                    position_ids=position_ids,
+                    past_key_values=past_key_values,
+                    encoder_outputs=encoder_outputs,
+                    inputs_embeds=inputs_embeds,
+                    use_cache="target-only", # we are using past_key_values to do decoding
+                    output_attentions=output_attentions,
+                    output_hidden_states=output_hidden_states,
+                    return_dict=True, # we want to retrive the past_key_values
+                )
+            
+            # if "old_key_states" not in locals():
+            #     old_key_states = encoder_outputs[0]
+            #     old_value_states = encoder_outputs[1]
+            # else:
+            #     print(i, F.mse_loss(old_key_states, encoder_outputs[0])+F.mse_loss(old_value_states, encoder_outputs[1]))
+            #     old_key_states = encoder_outputs[0]
+            #     old_value_states = encoder_outputs[1]
+            # breakpoint()
+
+        outputs = self.model(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+            past_key_values=past_key_values,
+            encoder_outputs=encoder_outputs,
+            inputs_embeds=inputs_embeds,
+            use_cache="target" if self.config.train_kv else False,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict,
+        )
+        
+        if self.config.train_kv:
+            # the loss to mimic KV and final hidden
+            gold_key_state, gold_value_state = encoder_outputs[1]
+            pred_key_state, pred_value_state = outputs[1][self.config.target_layer]
+            loss_kv = F.mse_loss(pred_key_state, gold_key_state) + F.mse_loss(pred_value_state, gold_value_state)
+
+        sequence_output = outputs[0]
+
+        logits = self.qa_outputs(sequence_output)
+        start_logits, end_logits = logits.split(1, dim=-1)
+        start_logits = start_logits.squeeze(-1).contiguous()
+        end_logits = end_logits.squeeze(-1).contiguous()
+
+        total_loss = None
+        if start_positions is not None and end_positions is not None:
+            # If we are on multi-GPU, split add a dimension
+            if len(start_positions.size()) > 1:
+                start_positions = start_positions.squeeze(-1).to(start_logits.device)
+            if len(end_positions.size()) > 1:
+                end_positions = end_positions.squeeze(-1).to(end_logits.device)
+            # sometimes the start/end positions are outside our model inputs, we ignore these terms
+            ignored_index = start_logits.size(1)
+            start_positions = start_positions.clamp(0, ignored_index)
+            end_positions = end_positions.clamp(0, ignored_index)
+
+            loss_fct = CrossEntropyLoss(ignore_index=ignored_index)
+            start_loss = loss_fct(start_logits, start_positions)
+            end_loss = loss_fct(end_logits, end_positions)
+            total_loss = (start_loss + end_loss) / 2
+
+            if self.config.train_kv:
+                total_loss = total_loss + loss_kv
+
+        if not return_dict:
+            output = (logits,) + outputs[1:]
+            return (total_loss,) + output if total_loss is not None else output
+
+        return QuestionAnsweringModelOutput(
+            loss=total_loss,
+            start_logits=start_logits,
+            end_logits=end_logits,
+            hidden_states=outputs.hidden_states,
+            attentions=outputs.attentions,
+        )
+
+    # def forward_training(
+    #     self,
+    #     input_ids: torch.LongTensor = None,
+    #     attention_mask: Optional[torch.Tensor] = None,
+    #     position_ids: Optional[torch.LongTensor] = None,
+    #     past_key_values: Optional[List[torch.FloatTensor]] = None,
+    #     inputs_embeds: Optional[torch.FloatTensor] = None,
+    #     start_positions: Optional[torch.LongTensor] = None,
+    #     end_positions: Optional[torch.LongTensor] = None,
+    #     use_cache: Optional[bool] = None,
+    #     output_attentions: Optional[bool] = None,
+    #     output_hidden_states: Optional[bool] = None,
+    #     return_dict: Optional[bool] = None,
+    # ) -> Union[Tuple, QuestionAnsweringModelOutput]:
+
+    #     assert past_key_values is None, "past_key_values is not supported for training."
+    #     assert not use_cache, "use_cache is not supported for training."
+
+    #     # initialize kv w/ zero
+    #     bsz, q_len = input_ids.size()
+    #     zero_states = torch.zeros(bsz, self.config.num_key_value_heads, q_len, self.config.hidden_size // self.config.num_attention_heads, device=input_ids.device, dtype=self.dtype)
+    #     encoder_outputs = (None, (zero_states, zero_states))
+
+    #     # pre-compute hidden states cache
+    #     encoder_outputs = self.model(
+    #         input_ids=input_ids,
+    #         attention_mask=attention_mask,
+    #         position_ids=position_ids,
+    #         past_key_values=past_key_values,
+    #         encoder_outputs=encoder_outputs,
+    #         inputs_embeds=inputs_embeds,
+    #         use_cache="head-only",
+    #         output_attentions=output_attentions,
+    #         output_hidden_states=output_hidden_states,
+    #         return_dict=True, # we want to retrive the past_key_values
+    #     )
+        
+    #     for i in range(self.config.num_encoders):
+            
+    #         context = torch.no_grad() if i < self.config.num_encoders - self.config.num_trained_encoders else dummy_context
+
+    #         with context:
+    #             # decoder outputs consists of (dec_features, layer_state, dec_hidden, dec_attn)
+    #             encoder_outputs = self.model(
+    #                 input_ids=input_ids,
+    #                 attention_mask=attention_mask,
+    #                 position_ids=position_ids,
+    #                 past_key_values=past_key_values,
+    #                 encoder_outputs=encoder_outputs,
+    #                 inputs_embeds=inputs_embeds,
+    #                 use_cache="target-only", # we are using past_key_values to do decoding
+    #                 output_attentions=output_attentions,
+    #                 output_hidden_states=output_hidden_states,
+    #                 return_dict=True, # we want to retrive the past_key_values
+    #             )
+            
+    #         # if "old_key_states" not in locals():
+    #         #     old_key_states = encoder_outputs[0]
+    #         #     old_value_states = encoder_outputs[1]
+    #         # else:
+    #         #     print(i, F.mse_loss(old_key_states, encoder_outputs[0])+F.mse_loss(old_value_states, encoder_outputs[1]))
+    #         #     old_key_states = encoder_outputs[0]
+    #         #     old_value_states = encoder_outputs[1]
+    #         # breakpoint()
+
+    #     outputs = self.model(
+    #         input_ids=input_ids,
+    #         attention_mask=attention_mask,
+    #         position_ids=position_ids,
+    #         past_key_values=past_key_values,
+    #         encoder_outputs=encoder_outputs,
+    #         inputs_embeds=inputs_embeds,
+    #         use_cache="target" if self.config.train_kv else False,
+    #         output_attentions=output_attentions,
+    #         output_hidden_states=output_hidden_states,
+    #         return_dict=return_dict,
+    #     )
+        
+    #     if self.config.train_kv:
+    #         # the loss to mimic KV and final hidden
+    #         gold_key_state, gold_value_state = encoder_outputs[1]
+    #         pred_key_state, pred_value_state = outputs[1][self.config.target_layer]
+    #         loss_kv = F.mse_loss(pred_key_state, gold_key_state) + F.mse_loss(pred_value_state, gold_value_state)
+
+    #     sequence_output = outputs[0]
+
+    #     logits = self.qa_outputs(sequence_output)
+    #     start_logits, end_logits = logits.split(1, dim=-1)
+    #     start_logits = start_logits.squeeze(-1).contiguous()
+    #     end_logits = end_logits.squeeze(-1).contiguous()
+
+    #     total_loss = None
+    #     if start_positions is not None and end_positions is not None:
+    #         # If we are on multi-GPU, split add a dimension
+    #         if len(start_positions.size()) > 1:
+    #             start_positions = start_positions.squeeze(-1).to(start_logits.device)
+    #         if len(end_positions.size()) > 1:
+    #             end_positions = end_positions.squeeze(-1).to(end_logits.device)
+    #         # sometimes the start/end positions are outside our model inputs, we ignore these terms
+    #         ignored_index = start_logits.size(1)
+    #         start_positions = start_positions.clamp(0, ignored_index)
+    #         end_positions = end_positions.clamp(0, ignored_index)
+
+    #         loss_fct = CrossEntropyLoss(ignore_index=ignored_index)
+    #         start_loss = loss_fct(start_logits, start_positions)
+    #         end_loss = loss_fct(end_logits, end_positions)
+    #         total_loss = (start_loss + end_loss) / 2
+
+    #         if self.config.train_kv:
+    #             total_loss = total_loss + loss_kv
+
+    #     if not return_dict:
+    #         output = (logits,) + outputs[1:]
+    #         return (total_loss,) + output if total_loss is not None else output
+
+    #     return QuestionAnsweringModelOutput(
+    #         loss=total_loss,
+    #         start_logits=start_logits,
+    #         end_logits=end_logits,
+    #         hidden_states=outputs.hidden_states,
+    #         attentions=outputs.attentions,
+    #     )
+    
+    # def forward_predict(
+    #     self,
+    #     input_ids: torch.LongTensor = None,
+    #     attention_mask: Optional[torch.Tensor] = None,
+    #     position_ids: Optional[torch.LongTensor] = None,
+    #     past_key_values: Optional[List[torch.FloatTensor]] = None,
+    #     inputs_embeds: Optional[torch.FloatTensor] = None,
+    #     start_positions: Optional[torch.LongTensor] = None,
+    #     end_positions: Optional[torch.LongTensor] = None,
+    #     use_cache: Optional[bool] = None,
+    #     output_attentions: Optional[bool] = None,
+    #     output_hidden_states: Optional[bool] = None,
+    #     return_dict: Optional[bool] = None,
+    # ) -> Union[Tuple, QuestionAnsweringModelOutput]:
+        
+    #     seq_len = input_ids.shape[1]
+        
+    #     if seq_len > self.config.num_encoders+1:
+    #         # long prompts use encoders to mimic the key value
+    #         outputs = self.forward_predict_prompt(
+    #             input_ids=input_ids,
+    #             attention_mask=attention_mask,
+    #             position_ids=position_ids,
+    #             past_key_values=past_key_values,
+    #             inputs_embeds=inputs_embeds,
+    #             start_positions=start_positions,
+    #             end_positions=end_positions,
+    #             use_cache=use_cache,
+    #             output_attentions=output_attentions,
+    #             output_hidden_states=output_hidden_states,
+    #             return_dict=return_dict,
+    #         )
+
+    #     elif seq_len > 1:
+    #         # short prompts decode token by token
+    #         logits = []
+    #         for i in range(seq_len):
+    #             m_input_ids = input_ids[:, i:i+1]
+    #             m_attention_mask = attention_mask[:, :i+1] if attention_mask is not None else None
+    #             m_position_ids = position_ids[:, i:i+1] if position_ids is not None else None
+    #             m_inputs_embeds = inputs_embeds[:, i:i+1] if inputs_embeds is not None else None
+                
+    #             outputs = self.forward_predict_one(
+    #                 input_ids=m_input_ids,
+    #                 attention_mask=m_attention_mask,
+    #                 position_ids=m_position_ids,
+    #                 past_key_values=past_key_values,
+    #                 inputs_embeds=m_inputs_embeds,
+    #                 start_positions=None,
+    #                 end_positions=None,
+    #                 use_cache=True,
+    #                 output_attentions=False,
+    #                 output_hidden_states=False,
+    #                 return_dict=True,
+    #             )
+
+    #             logits.append(outputs.logits)
+    #             past_key_values = outputs.past_key_values
+    #         logits = torch.cat(logits, dim=1)
+            
+            
+            
+    #         total_loss = None
+    #         if start_positions is not None and end_positions is not None:
+    #             # If we are on multi-GPU, split add a dimension
+    #             if len(start_positions.size()) > 1:
+    #                 start_positions = start_positions.squeeze(-1).to(start_logits.device)
+    #             if len(end_positions.size()) > 1:
+    #                 end_positions = end_positions.squeeze(-1).to(end_logits.device)
+    #             # sometimes the start/end positions are outside our model inputs, we ignore these terms
+    #             ignored_index = start_logits.size(1)
+    #             start_positions = start_positions.clamp(0, ignored_index)
+    #             end_positions = end_positions.clamp(0, ignored_index)
+
+    #             loss_fct = CrossEntropyLoss(ignore_index=ignored_index)
+    #             start_loss = loss_fct(start_logits, start_positions)
+    #             end_loss = loss_fct(end_logits, end_positions)
+    #             total_loss = (start_loss + end_loss) / 2
+
+    #         if not return_dict:
+    #             output = (start_logits, end_logits) + outputs[2:]
+    #         else:
+    #             outputs = QuestionAnsweringModelOutput(
+    #                 loss=None,
+    #                 start_logits=start_logits,
+    #                 end_logits=end_logits,
+    #                 hidden_states=outputs.hidden_states,
+    #                 attentions=outputs.attentions,
+    #             )
+        
+    #     else:
+    #         # token generation
+    #         outputs = self.forward_predict_one(
+    #             input_ids=input_ids,
+    #             attention_mask=attention_mask,
+    #             position_ids=position_ids,
+    #             past_key_values=past_key_values,
+    #             inputs_embeds=inputs_embeds,
+    #             start_positions=start_positions,
+    #             end_positions=end_positions,
+    #             use_cache=use_cache,
+    #             output_attentions=output_attentions,
+    #             output_hidden_states=output_hidden_states,
+    #             return_dict=return_dict,
+    #         )
+
+    #     return outputs
+    
+    # def forward_predict_prompt(
+    #     self,
+    #     input_ids: torch.LongTensor = None,
+    #     attention_mask: Optional[torch.Tensor] = None,
+    #     position_ids: Optional[torch.LongTensor] = None,
+    #     past_key_values: Optional[List[torch.FloatTensor]] = None,
+    #     inputs_embeds: Optional[torch.FloatTensor] = None,
+    #     labels: Optional[torch.LongTensor] = None,
+    #     use_cache: Optional[bool] = None,
+    #     output_attentions: Optional[bool] = None,
+    #     output_hidden_states: Optional[bool] = None,
+    #     return_dict: Optional[bool] = None,
+    # ) -> Union[Tuple, QuestionAnsweringModelOutput]:
+    #     # initialize kv w/ zero
+    #     bsz, q_len = input_ids.size()
+    #     zero_states = torch.zeros(bsz, self.config.num_key_value_heads, q_len, self.config.hidden_size // self.config.num_attention_heads, device=input_ids.device, dtype=self.dtype)
+    #     encoder_outputs = (None, (zero_states, zero_states))
+
+    #     # pre-compute hidden states cache
+    #     encoder_outputs = self.model(
+    #         input_ids=input_ids,
+    #         attention_mask=attention_mask,
+    #         position_ids=position_ids,
+    #         past_key_values=past_key_values,
+    #         encoder_outputs=encoder_outputs,
+    #         inputs_embeds=inputs_embeds,
+    #         use_cache="head-only",
+    #         output_attentions=output_attentions,
+    #         output_hidden_states=output_hidden_states,
+    #         return_dict=True, # we want to retrive the past_key_values
+    #     )
+        
+    #     for i in range(self.config.num_encoders):
+            
+    #         # decoder outputs consists of (dec_features, layer_state, dec_hidden, dec_attn)
+    #         encoder_outputs = self.model(
+    #             input_ids=input_ids,
+    #             attention_mask=attention_mask,
+    #             position_ids=position_ids,
+    #             past_key_values=past_key_values,
+    #             encoder_outputs=encoder_outputs,
+    #             inputs_embeds=inputs_embeds,
+    #             use_cache="target-only", # we are using past_key_values to do decoding
+    #             output_attentions=output_attentions,
+    #             output_hidden_states=output_hidden_states,
+    #             return_dict=True, # we want to retrive the past_key_values
+    #         )
+            
+    #         # if "old_key_states" not in locals():
+    #         #     old_key_states = encoder_outputs[0]
+    #         # else:
+    #         #     print(i, F.mse_loss(old_key_states, encoder_outputs[0]))
+    #         #     old_key_states = encoder_outputs[0]
+    #         # breakpoint()
+
+    #     outputs = self.model(
+    #         input_ids=input_ids,
+    #         attention_mask=attention_mask,
+    #         position_ids=position_ids,
+    #         past_key_values=past_key_values,
+    #         encoder_outputs=encoder_outputs,
+    #         inputs_embeds=inputs_embeds,
+    #         use_cache=True,
+    #         output_attentions=output_attentions,
+    #         output_hidden_states=output_hidden_states,
+    #         return_dict=return_dict,
+    #     )
+
+    #     # manually set the key value
+    #     if use_cache:
+    #         layer_types = [int(x) for x in self.config.layer_types.split("_")]
+    #         memory = outputs[1][self.config.target_layer]
+    #         if past_key_values is not None:
+    #             key_states, value_states = memory
+    #             key_states = torch.cat([past_key_values[self.config.target_layer][0], key_states], dim=-2)
+    #             value_states = torch.cat([past_key_values[self.config.target_layer][1], value_states], dim=-2)
+    #             memory = (key_states, value_states)
+    #         new_past_key_values = tuple(
+    #             outputs[1][idx] if tp == 0 else memory
+    #             for idx, tp in enumerate(layer_types)
+    #         )
+    #         if return_dict:
+    #             outputs.past_key_values = new_past_key_values
+    #         else:
+    #             outputs = tuple(outputs[0], new_past_key_values, *outputs[2:])
+
+    #     hidden_states = outputs[0]
+    #     if os.environ.get("LCKV_GENERATION", False):
+    #         # only use the last token
+    #         logits = self.lm_head(hidden_states[:,-1:,:])
+    #     else:
+    #         if self.config.pretraining_tp > 1:
+    #             lm_head_slices = self.lm_head.weight.split(self.vocab_size // self.config.pretraining_tp, dim=0)
+    #             logits = [F.linear(hidden_states, lm_head_slices[i]) for i in range(self.config.pretraining_tp)]
+    #             logits = torch.cat(logits, dim=-1)
+    #         else:
+    #             logits = self.lm_head(hidden_states)
+    #     # logits = logits.float()
+
+    #     loss = None
+    #     if labels is not None:
+    #         raise NotImplementedError("labels is not supported for prompt generation.")
+
+    #     if not return_dict:
+    #         output = (logits,) + outputs[1:]
+    #         return (loss,) + output if loss is not None else output
+
+    #     return QuestionAnsweringModelOutput(
+    #         loss=total_loss,
+    #         start_logits=start_logits,
+    #         end_logits=end_logits,
+    #         hidden_states=outputs.hidden_states,
+    #         attentions=outputs.attentions,
+    #     )
+        
+    
+    # def forward_predict_one(
+    #     self,
+    #     input_ids: torch.LongTensor = None,
+    #     attention_mask: Optional[torch.Tensor] = None,
+    #     position_ids: Optional[torch.LongTensor] = None,
+    #     past_key_values: Optional[List[torch.FloatTensor]] = None,
+    #     inputs_embeds: Optional[torch.FloatTensor] = None,
+    #     labels: Optional[torch.LongTensor] = None,
+    #     use_cache: Optional[bool] = None,
+    #     output_attentions: Optional[bool] = None,
+    #     output_hidden_states: Optional[bool] = None,
+    #     return_dict: Optional[bool] = None,
+    # ) -> Union[Tuple, QuestionAnsweringModelOutput]:
+        
+    #     output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
+    #     output_hidden_states = (
+    #         output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
+    #     )
+    #     return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+
+    #     outputs = self.model(
+    #         input_ids=input_ids,
+    #         attention_mask=attention_mask,
+    #         position_ids=position_ids,
+    #         past_key_values=past_key_values,
+    #         inputs_embeds=inputs_embeds,
+    #         use_cache=use_cache,
+    #         output_attentions=output_attentions,
+    #         output_hidden_states=output_hidden_states,
+    #         return_dict=return_dict,
+    #     )
+
+    #     # manually set the key value
+    #     if use_cache:
+    #         layer_types = [int(x) for x in self.config.layer_types.split("_")]
+    #         memory = outputs[1][self.config.target_layer]
+    #         new_past_key_values = tuple(
+    #             outputs[1][idx] if tp == 0 else memory
+    #             for idx, tp in enumerate(layer_types)
+    #         )
+    #         if return_dict:
+    #             outputs.past_key_values = new_past_key_values
+    #         else:
+    #             outputs = tuple(outputs[0], new_past_key_values, *outputs[2:])
+
+    #     hidden_states = outputs[0]
+    #     if self.config.pretraining_tp > 1:
+    #         lm_head_slices = self.lm_head.weight.split(self.vocab_size // self.config.pretraining_tp, dim=0)
+    #         logits = [F.linear(hidden_states, lm_head_slices[i]) for i in range(self.config.pretraining_tp)]
+    #         logits = torch.cat(logits, dim=-1)
+    #     else:
+    #         logits = self.lm_head(hidden_states)
+    #     # logits = logits.float()
+
+    #     loss = None
+    #     if labels is not None:
+    #         raise NotImplementedError("labels is not supported for token generation.")
+
+    #     if not return_dict:
+    #         output = (logits,) + outputs[1:]
+    #         return (loss,) + output if loss is not None else output
+
+    #     return QuestionAnsweringModelOutput(
+    #         loss=total_loss,
+    #         start_logits=start_logits,
+    #         end_logits=end_logits,
+    #         hidden_states=outputs.hidden_states,
+    #         attentions=outputs.attentions,
+    #     )
+
+    # def forward(
+    #     self,
+    #     input_ids: Optional[torch.LongTensor] = None,
+    #     attention_mask: Optional[torch.FloatTensor] = None,
+    #     position_ids: Optional[torch.LongTensor] = None,
+    #     past_key_values: Optional[List[torch.FloatTensor]] = None,
+    #     inputs_embeds: Optional[torch.FloatTensor] = None,
+    #     start_positions: Optional[torch.LongTensor] = None,
+    #     end_positions: Optional[torch.LongTensor] = None,
+    #     output_attentions: Optional[bool] = None,
+    #     output_hidden_states: Optional[bool] = None,
+    #     return_dict: Optional[bool] = None,
+    # ) -> Union[Tuple, QuestionAnsweringModelOutput]:
+    #     r"""
+    #     start_positions (`torch.LongTensor` of shape `(batch_size,)`, *optional*):
+    #         Labels for position (index) of the start of the labelled span for computing the token classification loss.
+    #         Positions are clamped to the length of the sequence (`sequence_length`). Position outside of the sequence
+    #         are not taken into account for computing the loss.
+    #     end_positions (`torch.LongTensor` of shape `(batch_size,)`, *optional*):
+    #         Labels for position (index) of the end of the labelled span for computing the token classification loss.
+    #         Positions are clamped to the length of the sequence (`sequence_length`). Position outside of the sequence
+    #         are not taken into account for computing the loss.
+    #     """
+    #     return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+
+    #     outputs = self.transformer(
+    #         input_ids,
+    #         attention_mask=attention_mask,
+    #         position_ids=position_ids,
+    #         past_key_values=past_key_values,
+    #         inputs_embeds=inputs_embeds,
+    #         output_attentions=output_attentions,
+    #         output_hidden_states=output_hidden_states,
+    #         return_dict=return_dict,
+    #     )
+
+    #     sequence_output = outputs[0]
+
+    #     logits = self.qa_outputs(sequence_output)
+    #     start_logits, end_logits = logits.split(1, dim=-1)
+    #     start_logits = start_logits.squeeze(-1).contiguous()
+    #     end_logits = end_logits.squeeze(-1).contiguous()
+
+    #     total_loss = None
+    #     if start_positions is not None and end_positions is not None:
+    #         # If we are on multi-GPU, split add a dimension
+    #         if len(start_positions.size()) > 1:
+    #             start_positions = start_positions.squeeze(-1).to(start_logits.device)
+    #         if len(end_positions.size()) > 1:
+    #             end_positions = end_positions.squeeze(-1).to(end_logits.device)
+    #         # sometimes the start/end positions are outside our model inputs, we ignore these terms
+    #         ignored_index = start_logits.size(1)
+    #         start_positions = start_positions.clamp(0, ignored_index)
+    #         end_positions = end_positions.clamp(0, ignored_index)
+
+    #         loss_fct = CrossEntropyLoss(ignore_index=ignored_index)
+    #         start_loss = loss_fct(start_logits, start_positions)
+    #         end_loss = loss_fct(end_logits, end_positions)
+    #         total_loss = (start_loss + end_loss) / 2
+
+    #     if not return_dict:
+    #         output = (start_logits, end_logits) + outputs[2:]
+    #         return ((total_loss,) + output) if total_loss is not None else output
+
+    #     return QuestionAnsweringModelOutput(
+    #         loss=total_loss,
+    #         start_logits=start_logits,
+    #         end_logits=end_logits,
+    #         hidden_states=outputs.hidden_states,
+    #         attentions=outputs.attentions,
+    #     )

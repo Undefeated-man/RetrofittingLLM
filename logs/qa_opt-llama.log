@@ -1,0 +1,301 @@
+eval_dataset
+Tuning on: stanfordnlp/coqa
+Process the dataset successfully!
+[2024-08-04 01:06:39,945] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io: please install the libaio-dev package with apt
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.2
+[93m [WARNING] [0m using untested triton version (2.2.0), only 1.0.0 is known to be compatible
+Error: 'eval_loss'
+{'loss': 7.0731, 'grad_norm': 8.428130149841309, 'learning_rate': 2.0000000000000002e-07, 'epoch': 0.002208968411751712, 'train_perplexity': 1179.79975039095}
+{'loss': 7.0731, 'grad_norm': 8.428130149841309, 'learning_rate': 2.0000000000000002e-07, 'epoch': 0.0, 'train_perplexity': 1179.79975039095}
+eval_dataset
+Tuning on: stanfordnlp/coqa
+Process the dataset successfully!
+[2024-08-04 01:12:07,017] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io: please install the libaio-dev package with apt
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.2
+[93m [WARNING] [0m using untested triton version (2.2.0), only 1.0.0 is known to be compatible
+Error: 'eval_loss'
+{'loss': 7.0974, 'grad_norm': 10.224547386169434, 'learning_rate': 2.0000000000000002e-07, 'epoch': 0.002208968411751712, 'train_perplexity': 1208.820052999659}
+{'loss': 7.0974, 'grad_norm': 10.224547386169434, 'learning_rate': 2.0000000000000002e-07, 'epoch': 0.0, 'train_perplexity': 1208.820052999659}
+Error: 'eval_loss'
+{'loss': 4.1201, 'grad_norm': 3.303358793258667, 'learning_rate': 1.9774033898178668e-05, 'epoch': 1.104484205875856, 'train_perplexity': 61.56539849646142}
+{'loss': 4.1201, 'grad_norm': 3.303358793258667, 'learning_rate': 1.9774033898178668e-05, 'epoch': 1.1, 'train_perplexity': 61.56539849646142}
+Error: 'loss'
+{'eval_loss': 3.450835704803467, 'eval_start_accuracy': 0.17211574596016535, 'eval_end_accuracy': 0.2491544532130778, 'eval_accuracy': 0.21063509958662158, 'eval_runtime': 150.624, 'eval_samples_per_second': 53.0, 'eval_steps_per_second': 2.211, 'epoch': 1.104484205875856, 'eval_perplexity': 31.52672834095299}
+{'eval_loss': 3.450835704803467, 'eval_start_accuracy': 0.17211574596016535, 'eval_end_accuracy': 0.2491544532130778, 'eval_accuracy': 0.21063509958662158, 'eval_runtime': 150.624, 'eval_samples_per_second': 53.0, 'eval_steps_per_second': 2.211, 'epoch': 1.1, 'eval_perplexity': 31.52672834095299}
+Error: 'eval_loss'
+{'loss': 3.1321, 'grad_norm': 3.504645586013794, 'learning_rate': 1.8873520750565716e-05, 'epoch': 2.208968411751712, 'train_perplexity': 22.922065371929357}
+{'loss': 3.1321, 'grad_norm': 3.504645586013794, 'learning_rate': 1.8873520750565716e-05, 'epoch': 2.21, 'train_perplexity': 22.922065371929357}
+Error: 'loss'
+{'eval_loss': 3.4722461700439453, 'eval_start_accuracy': 0.19078040836778154, 'eval_end_accuracy': 0.24552173368407867, 'eval_accuracy': 0.21815107102593012, 'eval_runtime': 151.062, 'eval_samples_per_second': 52.846, 'eval_steps_per_second': 2.204, 'epoch': 2.208968411751712, 'eval_perplexity': 32.20900816310503}
+{'eval_loss': 3.4722461700439453, 'eval_start_accuracy': 0.19078040836778154, 'eval_end_accuracy': 0.24552173368407867, 'eval_accuracy': 0.21815107102593012, 'eval_runtime': 151.062, 'eval_samples_per_second': 52.846, 'eval_steps_per_second': 2.204, 'epoch': 2.21, 'eval_perplexity': 32.20900816310503}
+Error: 'eval_loss'
+{'loss': 2.4434, 'grad_norm': 4.754338264465332, 'learning_rate': 1.7347741508630673e-05, 'epoch': 3.313452617627568, 'train_perplexity': 11.512115470715822}
+{'loss': 2.4434, 'grad_norm': 4.754338264465332, 'learning_rate': 1.7347741508630673e-05, 'epoch': 3.31, 'train_perplexity': 11.512115470715822}
+Error: 'loss'
+{'eval_loss': 3.9769680500030518, 'eval_start_accuracy': 0.16597770261806338, 'eval_end_accuracy': 0.2170863084053614, 'eval_accuracy': 0.1915320055117124, 'eval_runtime': 150.9649, 'eval_samples_per_second': 52.88, 'eval_steps_per_second': 2.206, 'epoch': 3.313452617627568, 'eval_perplexity': 53.35501899088988}
+{'eval_loss': 3.9769680500030518, 'eval_start_accuracy': 0.16597770261806338, 'eval_end_accuracy': 0.2170863084053614, 'eval_accuracy': 0.1915320055117124, 'eval_runtime': 150.9649, 'eval_samples_per_second': 52.88, 'eval_steps_per_second': 2.206, 'epoch': 3.31, 'eval_perplexity': 53.35501899088988}
+Error: 'eval_loss'
+{'loss': 1.4963, 'grad_norm': 5.892061710357666, 'learning_rate': 1.5304209081197425e-05, 'epoch': 4.417936823503424, 'train_perplexity': 4.465137460139306}
+{'loss': 1.4963, 'grad_norm': 5.892061710357666, 'learning_rate': 1.5304209081197425e-05, 'epoch': 4.42, 'train_perplexity': 4.465137460139306}
+Error: 'loss'
+{'eval_loss': 4.984283447265625, 'eval_start_accuracy': 0.14743830640110234, 'eval_end_accuracy': 0.19353626456219467, 'eval_accuracy': 0.1704872854816485, 'eval_runtime': 150.41, 'eval_samples_per_second': 53.075, 'eval_steps_per_second': 2.214, 'epoch': 4.417936823503424, 'eval_perplexity': 146.0988499796869}
+{'eval_loss': 4.984283447265625, 'eval_start_accuracy': 0.14743830640110234, 'eval_end_accuracy': 0.19353626456219467, 'eval_accuracy': 0.1704872854816485, 'eval_runtime': 150.41, 'eval_samples_per_second': 53.075, 'eval_steps_per_second': 2.214, 'epoch': 4.42, 'eval_perplexity': 146.0988499796869}
+Error: 'eval_loss'
+{'loss': 0.6431, 'grad_norm': 4.934111595153809, 'learning_rate': 1.2892017080914799e-05, 'epoch': 5.52242102937928, 'train_perplexity': 1.9023690920450675}
+{'loss': 0.6431, 'grad_norm': 4.934111595153809, 'learning_rate': 1.2892017080914799e-05, 'epoch': 5.52, 'train_perplexity': 1.9023690920450675}
+Error: 'loss'
+{'eval_loss': 6.35540771484375, 'eval_start_accuracy': 0.13904547162720782, 'eval_end_accuracy': 0.18789928598271327, 'eval_accuracy': 0.16347237880496054, 'eval_runtime': 151.539, 'eval_samples_per_second': 52.68, 'eval_steps_per_second': 2.197, 'epoch': 5.52242102937928, 'eval_perplexity': 575.5969722544205}
+{'eval_loss': 6.35540771484375, 'eval_start_accuracy': 0.13904547162720782, 'eval_end_accuracy': 0.18789928598271327, 'eval_accuracy': 0.16347237880496054, 'eval_runtime': 151.539, 'eval_samples_per_second': 52.68, 'eval_steps_per_second': 2.197, 'epoch': 5.52, 'eval_perplexity': 575.5969722544205}
+eval_dataset
+Tuning on: stanfordnlp/coqa
+Process the dataset successfully!
+[2024-08-04 10:31:18,324] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io: please install the libaio-dev package with apt
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.2
+[93m [WARNING] [0m using untested triton version (2.2.0), only 1.0.0 is known to be compatible
+Error: 'eval_loss'
+{'loss': 7.3579, 'grad_norm': 35.230552673339844, 'learning_rate': 1e-08, 'epoch': 0.002208968411751712, 'train_perplexity': 1568.5391696502727}
+{'loss': 7.3579, 'grad_norm': 35.230552673339844, 'learning_rate': 1e-08, 'epoch': 0.0, 'train_perplexity': 1568.5391696502727}
+eval_dataset
+Tuning on: stanfordnlp/coqa
+Attempt 1 failed: string indices must be integers
+eval_dataset
+Tuning on: stanfordnlp/coqa
+Process the dataset successfully!
+[2024-08-04 10:38:45,635] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io: please install the libaio-dev package with apt
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.2
+[93m [WARNING] [0m using untested triton version (2.2.0), only 1.0.0 is known to be compatible
+Error: 'eval_loss'
+{'loss': 7.4089, 'grad_norm': 34.643306732177734, 'learning_rate': 1.6666666666666667e-09, 'epoch': 0.002208968411751712, 'train_perplexity': 1650.6096772344097}
+{'loss': 7.4089, 'grad_norm': 34.643306732177734, 'learning_rate': 1.6666666666666667e-09, 'epoch': 0.0, 'train_perplexity': 1650.6096772344097}
+eval_dataset
+Tuning on: stanfordnlp/coqa
+Process the dataset successfully!
+[2024-08-04 11:19:40,273] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io: please install the libaio-dev package with apt
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.2
+[93m [WARNING] [0m using untested triton version (2.2.0), only 1.0.0 is known to be compatible
+Error: 'eval_loss'
+{'loss': 7.4357, 'grad_norm': 41.73661422729492, 'learning_rate': 1.6666666666666667e-09, 'epoch': 0.0014725371815638344, 'train_perplexity': 1695.444114586407}
+{'loss': 7.4357, 'grad_norm': 41.73661422729492, 'learning_rate': 1.6666666666666667e-09, 'epoch': 0.0, 'train_perplexity': 1695.444114586407}
+Error: 'eval_loss'
+{'loss': 7.404, 'grad_norm': 36.470218658447266, 'learning_rate': 8.333333333333333e-08, 'epoch': 0.07362685907819172, 'train_perplexity': 1642.5414730593152}
+{'loss': 7.404, 'grad_norm': 36.470218658447266, 'learning_rate': 8.333333333333333e-08, 'epoch': 0.07, 'train_perplexity': 1642.5414730593152}
+Error: 'loss'
+{'eval_loss': 7.250583171844482, 'eval_start_accuracy': 0.0032569209570336966, 'eval_end_accuracy': 0.0025053238131028436, 'eval_accuracy': 0.00288112238506827, 'eval_runtime': 150.8244, 'eval_samples_per_second': 52.929, 'eval_steps_per_second': 2.208, 'epoch': 0.07362685907819172, 'eval_perplexity': 1408.9262547935662}
+{'eval_loss': 7.250583171844482, 'eval_start_accuracy': 0.0032569209570336966, 'eval_end_accuracy': 0.0025053238131028436, 'eval_accuracy': 0.00288112238506827, 'eval_runtime': 150.8244, 'eval_samples_per_second': 52.929, 'eval_steps_per_second': 2.208, 'epoch': 0.07, 'eval_perplexity': 1408.9262547935662}
+Error: 'eval_loss'
+{'loss': 7.1504, 'grad_norm': 33.34316635131836, 'learning_rate': 1.6666666666666665e-07, 'epoch': 0.14725371815638344, 'train_perplexity': 1274.6156994975915}
+{'loss': 7.1504, 'grad_norm': 33.34316635131836, 'learning_rate': 1.6666666666666665e-07, 'epoch': 0.15, 'train_perplexity': 1274.6156994975915}
+Error: 'loss'
+{'eval_loss': 7.0180745124816895, 'eval_start_accuracy': 0.0038832519103094076, 'eval_end_accuracy': 0.002129525241137417, 'eval_accuracy': 0.003006388575723412, 'eval_runtime': 150.9746, 'eval_samples_per_second': 52.876, 'eval_steps_per_second': 2.206, 'epoch': 0.14725371815638344, 'eval_perplexity': 1116.634480699795}
+{'eval_loss': 7.0180745124816895, 'eval_start_accuracy': 0.0038832519103094076, 'eval_end_accuracy': 0.002129525241137417, 'eval_accuracy': 0.003006388575723412, 'eval_runtime': 150.9746, 'eval_samples_per_second': 52.876, 'eval_steps_per_second': 2.206, 'epoch': 0.15, 'eval_perplexity': 1116.634480699795}
+Error: 'eval_loss'
+{'loss': 6.9495, 'grad_norm': 32.693424224853516, 'learning_rate': 2.5e-07, 'epoch': 0.22088057723457516, 'train_perplexity': 1042.628283688199}
+{'loss': 6.9495, 'grad_norm': 32.693424224853516, 'learning_rate': 2.5e-07, 'epoch': 0.22, 'train_perplexity': 1042.628283688199}
+Error: 'loss'
+{'eval_loss': 6.8585591316223145, 'eval_start_accuracy': 0.003757985719654265, 'eval_end_accuracy': 0.002755856194413128, 'eval_accuracy': 0.0032569209570336966, 'eval_runtime': 150.8978, 'eval_samples_per_second': 52.903, 'eval_steps_per_second': 2.207, 'epoch': 0.22088057723457516, 'eval_perplexity': 951.9943801996509}
+{'eval_loss': 6.8585591316223145, 'eval_start_accuracy': 0.003757985719654265, 'eval_end_accuracy': 0.002755856194413128, 'eval_accuracy': 0.0032569209570336966, 'eval_runtime': 150.8978, 'eval_samples_per_second': 52.903, 'eval_steps_per_second': 2.207, 'epoch': 0.22, 'eval_perplexity': 951.9943801996509}
+Error: 'eval_loss'
+{'loss': 6.7989, 'grad_norm': 30.440067291259766, 'learning_rate': 3.333333333333333e-07, 'epoch': 0.2945074363127669, 'train_perplexity': 896.8602026280957}
+{'loss': 6.7989, 'grad_norm': 30.440067291259766, 'learning_rate': 3.333333333333333e-07, 'epoch': 0.29, 'train_perplexity': 896.8602026280957}
+Error: 'loss'
+{'eval_loss': 6.716950416564941, 'eval_start_accuracy': 0.004634849054240261, 'eval_end_accuracy': 0.003632719528999123, 'eval_accuracy': 0.004133784291619692, 'eval_runtime': 150.8528, 'eval_samples_per_second': 52.919, 'eval_steps_per_second': 2.207, 'epoch': 0.2945074363127669, 'eval_perplexity': 826.2938133975624}
+{'eval_loss': 6.716950416564941, 'eval_start_accuracy': 0.004634849054240261, 'eval_end_accuracy': 0.003632719528999123, 'eval_accuracy': 0.004133784291619692, 'eval_runtime': 150.8528, 'eval_samples_per_second': 52.919, 'eval_steps_per_second': 2.207, 'epoch': 0.29, 'eval_perplexity': 826.2938133975624}
+Error: 'eval_loss'
+{'loss': 6.649, 'grad_norm': 28.095335006713867, 'learning_rate': 4.1666666666666667e-07, 'epoch': 0.3681342953909586, 'train_perplexity': 772.0119274730122}
+{'loss': 6.649, 'grad_norm': 28.095335006713867, 'learning_rate': 4.1666666666666667e-07, 'epoch': 0.37, 'train_perplexity': 772.0119274730122}
+Error: 'loss'
+{'eval_loss': 6.576739311218262, 'eval_start_accuracy': 0.005386446198171114, 'eval_end_accuracy': 0.005261180007515971, 'eval_accuracy': 0.005323813102843543, 'eval_runtime': 150.6826, 'eval_samples_per_second': 52.979, 'eval_steps_per_second': 2.21, 'epoch': 0.3681342953909586, 'eval_perplexity': 718.1937010015768}
+{'eval_loss': 6.576739311218262, 'eval_start_accuracy': 0.005386446198171114, 'eval_end_accuracy': 0.005261180007515971, 'eval_accuracy': 0.005323813102843543, 'eval_runtime': 150.6826, 'eval_samples_per_second': 52.979, 'eval_steps_per_second': 2.21, 'epoch': 0.37, 'eval_perplexity': 718.1937010015768}
+Error: 'eval_loss'
+{'loss': 6.5186, 'grad_norm': 24.5512752532959, 'learning_rate': 5e-07, 'epoch': 0.4417611544691503, 'train_perplexity': 677.6290402965573}
+{'loss': 6.5186, 'grad_norm': 24.5512752532959, 'learning_rate': 5e-07, 'epoch': 0.44, 'train_perplexity': 677.6290402965573}
+Error: 'loss'
+{'eval_loss': 6.427490234375, 'eval_start_accuracy': 0.005261180007515971, 'eval_end_accuracy': 0.004133784291619692, 'eval_accuracy': 0.004697482149567831, 'eval_runtime': 151.6118, 'eval_samples_per_second': 52.654, 'eval_steps_per_second': 2.196, 'epoch': 0.4417611544691503, 'eval_perplexity': 618.6194083375836}
+{'eval_loss': 6.427490234375, 'eval_start_accuracy': 0.005261180007515971, 'eval_end_accuracy': 0.004133784291619692, 'eval_accuracy': 0.004697482149567831, 'eval_runtime': 151.6118, 'eval_samples_per_second': 52.654, 'eval_steps_per_second': 2.196, 'epoch': 0.44, 'eval_perplexity': 618.6194083375836}
+Error: 'eval_loss'
+{'loss': 6.3532, 'grad_norm': 20.751506805419922, 'learning_rate': 5.833333333333334e-07, 'epoch': 0.5153880135473421, 'train_perplexity': 574.3276199742614}
+{'loss': 6.3532, 'grad_norm': 20.751506805419922, 'learning_rate': 5.833333333333334e-07, 'epoch': 0.52, 'train_perplexity': 574.3276199742614}
+Error: 'loss'
+{'eval_loss': 6.285468101501465, 'eval_start_accuracy': 0.005261180007515971, 'eval_end_accuracy': 0.005010647626205687, 'eval_accuracy': 0.00513591381686083, 'eval_runtime': 150.9934, 'eval_samples_per_second': 52.87, 'eval_steps_per_second': 2.205, 'epoch': 0.5153880135473421, 'eval_perplexity': 536.7154691613639}
+{'eval_loss': 6.285468101501465, 'eval_start_accuracy': 0.005261180007515971, 'eval_end_accuracy': 0.005010647626205687, 'eval_accuracy': 0.00513591381686083, 'eval_runtime': 150.9934, 'eval_samples_per_second': 52.87, 'eval_steps_per_second': 2.205, 'epoch': 0.52, 'eval_perplexity': 536.7154691613639}
+Error: 'eval_loss'
+{'loss': 6.2279, 'grad_norm': 16.527780532836914, 'learning_rate': 6.666666666666666e-07, 'epoch': 0.5890148726255338, 'train_perplexity': 506.69031579798434}
+{'loss': 6.2279, 'grad_norm': 16.527780532836914, 'learning_rate': 6.666666666666666e-07, 'epoch': 0.59, 'train_perplexity': 506.69031579798434}
+eval_dataset
+Tuning on: stanfordnlp/coqa
+Process the dataset successfully!
+[2024-08-04 12:42:48,096] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io: please install the libaio-dev package with apt
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.2
+[93m [WARNING] [0m using untested triton version (2.2.0), only 1.0.0 is known to be compatible
+Error: 'eval_loss'
+{'loss': 7.3762, 'grad_norm': 35.74000549316406, 'learning_rate': 1.666666666666667e-08, 'epoch': 0.002208968411751712, 'train_perplexity': 1597.507689981434}
+{'loss': 7.3762, 'grad_norm': 35.74000549316406, 'learning_rate': 1.666666666666667e-08, 'epoch': 0.0, 'train_perplexity': 1597.507689981434}
+eval_dataset
+Tuning on: stanfordnlp/coqa
+Process the dataset successfully!
+[2024-08-04 13:03:01,392] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io: please install the libaio-dev package with apt
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.2
+[93m [WARNING] [0m using untested triton version (2.2.0), only 1.0.0 is known to be compatible
+Error: 'eval_loss'
+{'loss': 7.3227, 'grad_norm': 40.44171905517578, 'learning_rate': 1.666666666666667e-08, 'epoch': 0.0014725371815638344, 'train_perplexity': 1514.2870301326636}
+{'loss': 7.3227, 'grad_norm': 40.44171905517578, 'learning_rate': 1.666666666666667e-08, 'epoch': 0.0, 'train_perplexity': 1514.2870301326636}
+Error: 'eval_loss'
+{'loss': 7.0507, 'grad_norm': 32.225101470947266, 'learning_rate': 8.333333333333333e-07, 'epoch': 0.07362685907819172, 'train_perplexity': 1153.6660264196446}
+{'loss': 7.0507, 'grad_norm': 32.225101470947266, 'learning_rate': 8.333333333333333e-07, 'epoch': 0.07, 'train_perplexity': 1153.6660264196446}
+Error: 'loss'
+{'eval_loss': 6.752682685852051, 'eval_start_accuracy': 0.0033821871476888386, 'eval_end_accuracy': 0.00288112238506827, 'eval_accuracy': 0.0031316547663785546, 'eval_runtime': 150.9748, 'eval_samples_per_second': 52.876, 'eval_steps_per_second': 2.206, 'epoch': 0.07362685907819172, 'eval_perplexity': 856.3530098817243}
+{'eval_loss': 6.752682685852051, 'eval_start_accuracy': 0.0033821871476888386, 'eval_end_accuracy': 0.00288112238506827, 'eval_accuracy': 0.0031316547663785546, 'eval_runtime': 150.9748, 'eval_samples_per_second': 52.876, 'eval_steps_per_second': 2.206, 'epoch': 0.07, 'eval_perplexity': 856.3530098817243}
+Error: 'eval_loss'
+{'loss': 6.5734, 'grad_norm': 24.546493530273438, 'learning_rate': 1.6666666666666667e-06, 'epoch': 0.14725371815638344, 'train_perplexity': 715.7994285542361}
+{'loss': 6.5734, 'grad_norm': 24.546493530273438, 'learning_rate': 1.6666666666666667e-06, 'epoch': 0.15, 'train_perplexity': 715.7994285542361}
+Error: 'loss'
+{'eval_loss': 6.321097373962402, 'eval_start_accuracy': 0.003757985719654265, 'eval_end_accuracy': 0.003757985719654265, 'eval_accuracy': 0.003757985719654265, 'eval_runtime': 151.0087, 'eval_samples_per_second': 52.864, 'eval_steps_per_second': 2.205, 'epoch': 0.14725371815638344, 'eval_perplexity': 556.1829984286555}
+{'eval_loss': 6.321097373962402, 'eval_start_accuracy': 0.003757985719654265, 'eval_end_accuracy': 0.003757985719654265, 'eval_accuracy': 0.003757985719654265, 'eval_runtime': 151.0087, 'eval_samples_per_second': 52.864, 'eval_steps_per_second': 2.205, 'epoch': 0.15, 'eval_perplexity': 556.1829984286555}
+Error: 'eval_loss'
+{'loss': 6.1627, 'grad_norm': 13.074649810791016, 'learning_rate': 2.5e-06, 'epoch': 0.22088057723457516, 'train_perplexity': 474.7080578363513}
+{'loss': 6.1627, 'grad_norm': 13.074649810791016, 'learning_rate': 2.5e-06, 'epoch': 0.22, 'train_perplexity': 474.7080578363513}
+Error: 'loss'
+{'eval_loss': 6.000287055969238, 'eval_start_accuracy': 0.008518100964549668, 'eval_end_accuracy': 0.008142302392584242, 'eval_accuracy': 0.008330201678566955, 'eval_runtime': 150.7512, 'eval_samples_per_second': 52.955, 'eval_steps_per_second': 2.209, 'epoch': 0.22088057723457516, 'eval_perplexity': 403.5446167591545}
+{'eval_loss': 6.000287055969238, 'eval_start_accuracy': 0.008518100964549668, 'eval_end_accuracy': 0.008142302392584242, 'eval_accuracy': 0.008330201678566955, 'eval_runtime': 150.7512, 'eval_samples_per_second': 52.955, 'eval_steps_per_second': 2.209, 'epoch': 0.22, 'eval_perplexity': 403.5446167591545}
+Error: 'eval_loss'
+{'loss': 5.9503, 'grad_norm': 7.995981216430664, 'learning_rate': 3.3333333333333333e-06, 'epoch': 0.2945074363127669, 'train_perplexity': 383.86848233345756}
+{'loss': 5.9503, 'grad_norm': 7.995981216430664, 'learning_rate': 3.3333333333333333e-06, 'epoch': 0.29, 'train_perplexity': 383.86848233345756}
+Error: 'loss'
+{'eval_loss': 5.852325439453125, 'eval_start_accuracy': 0.016284604785168483, 'eval_end_accuracy': 0.0080170362019291, 'eval_accuracy': 0.012150820493548792, 'eval_runtime': 150.3539, 'eval_samples_per_second': 53.095, 'eval_steps_per_second': 2.215, 'epoch': 0.2945074363127669, 'eval_perplexity': 348.04279259899863}
+{'eval_loss': 5.852325439453125, 'eval_start_accuracy': 0.016284604785168483, 'eval_end_accuracy': 0.0080170362019291, 'eval_accuracy': 0.012150820493548792, 'eval_runtime': 150.3539, 'eval_samples_per_second': 53.095, 'eval_steps_per_second': 2.215, 'epoch': 0.29, 'eval_perplexity': 348.04279259899863}
+Error: 'eval_loss'
+{'loss': 5.8467, 'grad_norm': 6.43356990814209, 'learning_rate': 4.166666666666667e-06, 'epoch': 0.3681342953909586, 'train_perplexity': 346.09039563631086}
+{'loss': 5.8467, 'grad_norm': 6.43356990814209, 'learning_rate': 4.166666666666667e-06, 'epoch': 0.37, 'train_perplexity': 346.09039563631086}
+Error: 'loss'
+{'eval_loss': 5.780652046203613, 'eval_start_accuracy': 0.019917324314167605, 'eval_end_accuracy': 0.008142302392584242, 'eval_accuracy': 0.014029813353375924, 'eval_runtime': 149.9835, 'eval_samples_per_second': 53.226, 'eval_steps_per_second': 2.22, 'epoch': 0.3681342953909586, 'eval_perplexity': 323.97036520861775}
+{'eval_loss': 5.780652046203613, 'eval_start_accuracy': 0.019917324314167605, 'eval_end_accuracy': 0.008142302392584242, 'eval_accuracy': 0.014029813353375924, 'eval_runtime': 149.9835, 'eval_samples_per_second': 53.226, 'eval_steps_per_second': 2.22, 'epoch': 0.37, 'eval_perplexity': 323.97036520861775}
+Error: 'eval_loss'
+{'loss': 5.7889, 'grad_norm': 6.156145095825195, 'learning_rate': 5e-06, 'epoch': 0.4417611544691503, 'train_perplexity': 326.65350781951474}
+{'loss': 5.7889, 'grad_norm': 6.156145095825195, 'learning_rate': 5e-06, 'epoch': 0.44, 'train_perplexity': 326.65350781951474}
+Error: 'loss'
+{'eval_loss': 5.725266933441162, 'eval_start_accuracy': 0.024927971940373293, 'eval_end_accuracy': 0.009645496680445948, 'eval_accuracy': 0.01728673431040962, 'eval_runtime': 149.8755, 'eval_samples_per_second': 53.264, 'eval_steps_per_second': 2.222, 'epoch': 0.4417611544691503, 'eval_perplexity': 306.51507344752906}
+{'eval_loss': 5.725266933441162, 'eval_start_accuracy': 0.024927971940373293, 'eval_end_accuracy': 0.009645496680445948, 'eval_accuracy': 0.01728673431040962, 'eval_runtime': 149.8755, 'eval_samples_per_second': 53.264, 'eval_steps_per_second': 2.222, 'epoch': 0.44, 'eval_perplexity': 306.51507344752906}
+Error: 'eval_loss'
+{'loss': 5.7385, 'grad_norm': 5.443657875061035, 'learning_rate': 5.833333333333334e-06, 'epoch': 0.5153880135473421, 'train_perplexity': 310.59816413747507}
+{'loss': 5.7385, 'grad_norm': 5.443657875061035, 'learning_rate': 5.833333333333334e-06, 'epoch': 0.52, 'train_perplexity': 310.59816413747507}
+Error: 'loss'
+{'eval_loss': 5.677588939666748, 'eval_start_accuracy': 0.02705749718151071, 'eval_end_accuracy': 0.011775021921583365, 'eval_accuracy': 0.019416259551547035, 'eval_runtime': 149.9293, 'eval_samples_per_second': 53.245, 'eval_steps_per_second': 2.221, 'epoch': 0.5153880135473421, 'eval_perplexity': 292.24396197705823}
+{'eval_loss': 5.677588939666748, 'eval_start_accuracy': 0.02705749718151071, 'eval_end_accuracy': 0.011775021921583365, 'eval_accuracy': 0.019416259551547035, 'eval_runtime': 149.9293, 'eval_samples_per_second': 53.245, 'eval_steps_per_second': 2.221, 'epoch': 0.52, 'eval_perplexity': 292.24396197705823}
+Error: 'eval_loss'
+{'loss': 5.6925, 'grad_norm': 7.502399921417236, 'learning_rate': 6.666666666666667e-06, 'epoch': 0.5890148726255338, 'train_perplexity': 296.6342801306877}
+{'loss': 5.6925, 'grad_norm': 7.502399921417236, 'learning_rate': 6.666666666666667e-06, 'epoch': 0.59, 'train_perplexity': 296.6342801306877}
+Error: 'loss'
+{'eval_loss': 5.638366222381592, 'eval_start_accuracy': 0.0311912814731304, 'eval_end_accuracy': 0.012401352874859075, 'eval_accuracy': 0.021796317173994738, 'eval_runtime': 150.1724, 'eval_samples_per_second': 53.159, 'eval_steps_per_second': 2.217, 'epoch': 0.5890148726255338, 'eval_perplexity': 281.00324642519774}
+{'eval_loss': 5.638366222381592, 'eval_start_accuracy': 0.0311912814731304, 'eval_end_accuracy': 0.012401352874859075, 'eval_accuracy': 0.021796317173994738, 'eval_runtime': 150.1724, 'eval_samples_per_second': 53.159, 'eval_steps_per_second': 2.217, 'epoch': 0.59, 'eval_perplexity': 281.00324642519774}
+Error: 'eval_loss'
+{'loss': 5.6324, 'grad_norm': 8.321318626403809, 'learning_rate': 7.500000000000001e-06, 'epoch': 0.6626417317037255, 'train_perplexity': 279.3317099046809}
+{'loss': 5.6324, 'grad_norm': 8.321318626403809, 'learning_rate': 7.500000000000001e-06, 'epoch': 0.66, 'train_perplexity': 279.3317099046809}
+Error: 'loss'
+{'eval_loss': 5.554898738861084, 'eval_start_accuracy': 0.03106601528247526, 'eval_end_accuracy': 0.012401352874859075, 'eval_accuracy': 0.021733684078667166, 'eval_runtime': 149.5241, 'eval_samples_per_second': 53.389, 'eval_steps_per_second': 2.227, 'epoch': 0.6626417317037255, 'eval_perplexity': 258.50078711110547}
+{'eval_loss': 5.554898738861084, 'eval_start_accuracy': 0.03106601528247526, 'eval_end_accuracy': 0.012401352874859075, 'eval_accuracy': 0.021733684078667166, 'eval_runtime': 149.5241, 'eval_samples_per_second': 53.389, 'eval_steps_per_second': 2.227, 'epoch': 0.66, 'eval_perplexity': 258.50078711110547}
+Error: 'eval_loss'
+{'loss': 5.5039, 'grad_norm': 5.390197277069092, 'learning_rate': 8.333333333333334e-06, 'epoch': 0.7362685907819172, 'train_perplexity': 245.64809410370296}
+{'loss': 5.5039, 'grad_norm': 5.390197277069092, 'learning_rate': 8.333333333333334e-06, 'epoch': 0.74, 'train_perplexity': 245.64809410370296}
+Error: 'loss'
+{'eval_loss': 5.396137714385986, 'eval_start_accuracy': 0.04171364148816235, 'eval_end_accuracy': 0.014280345734686208, 'eval_accuracy': 0.027996993611424277, 'eval_runtime': 150.0574, 'eval_samples_per_second': 53.2, 'eval_steps_per_second': 2.219, 'epoch': 0.7362685907819172, 'eval_perplexity': 220.5529306514885}
+{'eval_loss': 5.396137714385986, 'eval_start_accuracy': 0.04171364148816235, 'eval_end_accuracy': 0.014280345734686208, 'eval_accuracy': 0.027996993611424277, 'eval_runtime': 150.0574, 'eval_samples_per_second': 53.2, 'eval_steps_per_second': 2.219, 'epoch': 0.74, 'eval_perplexity': 220.5529306514885}
+Error: 'eval_loss'
+{'loss': 5.4137, 'grad_norm': 4.366697788238525, 'learning_rate': 9.166666666666666e-06, 'epoch': 0.809895449860109, 'train_perplexity': 224.46055720286458}
+{'loss': 5.4137, 'grad_norm': 4.366697788238525, 'learning_rate': 9.166666666666666e-06, 'epoch': 0.81, 'train_perplexity': 224.46055720286458}
+Error: 'loss'
+{'eval_loss': 5.345619201660156, 'eval_start_accuracy': 0.040586245772266064, 'eval_end_accuracy': 0.015658273831892774, 'eval_accuracy': 0.02812225980207942, 'eval_runtime': 149.6762, 'eval_samples_per_second': 53.335, 'eval_steps_per_second': 2.225, 'epoch': 0.809895449860109, 'eval_perplexity': 209.68768337057338}
+{'eval_loss': 5.345619201660156, 'eval_start_accuracy': 0.040586245772266064, 'eval_end_accuracy': 0.015658273831892774, 'eval_accuracy': 0.02812225980207942, 'eval_runtime': 149.6762, 'eval_samples_per_second': 53.335, 'eval_steps_per_second': 2.225, 'epoch': 0.81, 'eval_perplexity': 209.68768337057338}
+Error: 'eval_loss'
+{'loss': 5.3884, 'grad_norm': 5.254694938659668, 'learning_rate': 1e-05, 'epoch': 0.8835223089383006, 'train_perplexity': 218.85294056781868}
+{'loss': 5.3884, 'grad_norm': 5.254694938659668, 'learning_rate': 1e-05, 'epoch': 0.88, 'train_perplexity': 218.85294056781868}
+Error: 'loss'
+{'eval_loss': 5.311854362487793, 'eval_start_accuracy': 0.04221470625078291, 'eval_end_accuracy': 0.012401352874859075, 'eval_accuracy': 0.027308029562820996, 'eval_runtime': 149.6752, 'eval_samples_per_second': 53.336, 'eval_steps_per_second': 2.225, 'epoch': 0.8835223089383006, 'eval_perplexity': 202.72580718305716}
+{'eval_loss': 5.311854362487793, 'eval_start_accuracy': 0.04221470625078291, 'eval_end_accuracy': 0.012401352874859075, 'eval_accuracy': 0.027308029562820996, 'eval_runtime': 149.6752, 'eval_samples_per_second': 53.336, 'eval_steps_per_second': 2.225, 'epoch': 0.88, 'eval_perplexity': 202.72580718305716}
+Error: 'eval_loss'
+{'loss': 5.3265, 'grad_norm': 5.1195878982543945, 'learning_rate': 9.997884750411004e-06, 'epoch': 0.9571491680164924, 'train_perplexity': 205.71670420547142}
+{'loss': 5.3265, 'grad_norm': 5.1195878982543945, 'learning_rate': 9.997884750411004e-06, 'epoch': 0.96, 'train_perplexity': 205.71670420547142}
+Error: 'loss'
+{'eval_loss': 5.271347999572754, 'eval_start_accuracy': 0.043968432919954906, 'eval_end_accuracy': 0.01615933859451334, 'eval_accuracy': 0.03006388575723412, 'eval_runtime': 149.8094, 'eval_samples_per_second': 53.288, 'eval_steps_per_second': 2.223, 'epoch': 0.9571491680164924, 'eval_perplexity': 194.67821179600085}
+{'eval_loss': 5.271347999572754, 'eval_start_accuracy': 0.043968432919954906, 'eval_end_accuracy': 0.01615933859451334, 'eval_accuracy': 0.03006388575723412, 'eval_runtime': 149.8094, 'eval_samples_per_second': 53.288, 'eval_steps_per_second': 2.223, 'epoch': 0.96, 'eval_perplexity': 194.67821179600085}
+Error: 'eval_loss'
+{'loss': 5.2558, 'grad_norm': 5.407653331756592, 'learning_rate': 9.991540791356342e-06, 'epoch': 1.0307760270946842, 'train_perplexity': 191.67476434628247}
+{'loss': 5.2558, 'grad_norm': 5.407653331756592, 'learning_rate': 9.991540791356342e-06, 'epoch': 1.03, 'train_perplexity': 191.67476434628247}
+Error: 'loss'
+{'eval_loss': 5.247440814971924, 'eval_start_accuracy': 0.046223224351747465, 'eval_end_accuracy': 0.01728673431040962, 'eval_accuracy': 0.03175497933107854, 'eval_runtime': 148.7929, 'eval_samples_per_second': 53.652, 'eval_steps_per_second': 2.238, 'epoch': 1.0307760270946842, 'eval_perplexity': 190.0791976355496}
+{'eval_loss': 5.247440814971924, 'eval_start_accuracy': 0.046223224351747465, 'eval_end_accuracy': 0.01728673431040962, 'eval_accuracy': 0.03175497933107854, 'eval_runtime': 148.7929, 'eval_samples_per_second': 53.652, 'eval_steps_per_second': 2.238, 'epoch': 1.03, 'eval_perplexity': 190.0791976355496}
+Error: 'eval_loss'
+{'loss': 5.1581, 'grad_norm': 8.153609275817871, 'learning_rate': 9.980973490458728e-06, 'epoch': 1.1044028861728759, 'train_perplexity': 173.83385730729898}
+{'loss': 5.1581, 'grad_norm': 8.153609275817871, 'learning_rate': 9.980973490458728e-06, 'epoch': 1.1, 'train_perplexity': 173.83385730729898}
+Error: 'loss'
+{'eval_loss': 5.272818088531494, 'eval_start_accuracy': 0.046849555305023174, 'eval_end_accuracy': 0.018038331454340473, 'eval_accuracy': 0.032443943379681824, 'eval_runtime': 150.6097, 'eval_samples_per_second': 53.005, 'eval_steps_per_second': 2.211, 'epoch': 1.1044028861728759, 'eval_perplexity': 194.96461655432535}
+{'eval_loss': 5.272818088531494, 'eval_start_accuracy': 0.046849555305023174, 'eval_end_accuracy': 0.018038331454340473, 'eval_accuracy': 0.032443943379681824, 'eval_runtime': 150.6097, 'eval_samples_per_second': 53.005, 'eval_steps_per_second': 2.211, 'epoch': 1.1, 'eval_perplexity': 194.96461655432535}
+Error: 'eval_loss'
+{'loss': 5.1074, 'grad_norm': 7.866557598114014, 'learning_rate': 9.966191788709716e-06, 'epoch': 1.1780297452510675, 'train_perplexity': 165.24017143186907}
+{'loss': 5.1074, 'grad_norm': 7.866557598114014, 'learning_rate': 9.966191788709716e-06, 'epoch': 1.18, 'train_perplexity': 165.24017143186907}
+Error: 'loss'
+{'eval_loss': 5.2546162605285645, 'eval_start_accuracy': 0.04208944006012777, 'eval_end_accuracy': 0.0184141300263059, 'eval_accuracy': 0.030251785043216836, 'eval_runtime': 149.9104, 'eval_samples_per_second': 53.252, 'eval_steps_per_second': 2.221, 'epoch': 1.1780297452510675, 'eval_perplexity': 191.44800560016546}
+{'eval_loss': 5.2546162605285645, 'eval_start_accuracy': 0.04208944006012777, 'eval_end_accuracy': 0.0184141300263059, 'eval_accuracy': 0.030251785043216836, 'eval_runtime': 149.9104, 'eval_samples_per_second': 53.252, 'eval_steps_per_second': 2.221, 'epoch': 1.18, 'eval_perplexity': 191.44800560016546}
+Error: 'eval_loss'
+{'loss': 5.0816, 'grad_norm': 8.55656909942627, 'learning_rate': 9.947208192904722e-06, 'epoch': 1.2516566043292592, 'train_perplexity': 161.03150031868364}
+{'loss': 5.0816, 'grad_norm': 8.55656909942627, 'learning_rate': 9.947208192904722e-06, 'epoch': 1.25, 'train_perplexity': 161.03150031868364}
+Error: 'loss'
+{'eval_loss': 5.239651679992676, 'eval_start_accuracy': 0.047475886258298884, 'eval_end_accuracy': 0.017537266691719906, 'eval_accuracy': 0.032506576475009395, 'eval_runtime': 150.3967, 'eval_samples_per_second': 53.08, 'eval_steps_per_second': 2.214, 'epoch': 1.2516566043292592, 'eval_perplexity': 188.60439627825787}
+{'eval_loss': 5.239651679992676, 'eval_start_accuracy': 0.047475886258298884, 'eval_end_accuracy': 0.017537266691719906, 'eval_accuracy': 0.032506576475009395, 'eval_runtime': 150.3967, 'eval_samples_per_second': 53.08, 'eval_steps_per_second': 2.214, 'epoch': 1.25, 'eval_perplexity': 188.60439627825787}
+Error: 'eval_loss'
+{'loss': 5.0816, 'grad_norm': 8.881523132324219, 'learning_rate': 9.924038765061042e-06, 'epoch': 1.325283463407451, 'train_perplexity': 161.03150031868364}
+{'loss': 5.0816, 'grad_norm': 8.881523132324219, 'learning_rate': 9.924038765061042e-06, 'epoch': 1.33, 'train_perplexity': 161.03150031868364}
+Error: 'loss'
+{'eval_loss': 5.251304626464844, 'eval_start_accuracy': 0.0424652386320932, 'eval_end_accuracy': 0.019040460979581612, 'eval_accuracy': 0.030752849805837406, 'eval_runtime': 150.0712, 'eval_samples_per_second': 53.195, 'eval_steps_per_second': 2.219, 'epoch': 1.325283463407451, 'eval_perplexity': 190.8150485029962}
+{'eval_loss': 5.251304626464844, 'eval_start_accuracy': 0.0424652386320932, 'eval_end_accuracy': 0.019040460979581612, 'eval_accuracy': 0.030752849805837406, 'eval_runtime': 150.0712, 'eval_samples_per_second': 53.195, 'eval_steps_per_second': 2.219, 'epoch': 1.33, 'eval_perplexity': 190.8150485029962}
+Error: 'eval_loss'
+{'loss': 5.0454, 'grad_norm': 9.272665977478027, 'learning_rate': 9.896703108827758e-06, 'epoch': 1.3989103224856427, 'train_perplexity': 155.30640933923948}
+{'loss': 5.0454, 'grad_norm': 9.272665977478027, 'learning_rate': 9.896703108827758e-06, 'epoch': 1.4, 'train_perplexity': 155.30640933923948}
+Error: 'loss'
+{'eval_loss': 5.231622695922852, 'eval_start_accuracy': 0.04547162720781661, 'eval_end_accuracy': 0.021169986220719028, 'eval_accuracy': 0.03332080671426782, 'eval_runtime': 150.1606, 'eval_samples_per_second': 53.163, 'eval_steps_per_second': 2.218, 'epoch': 1.3989103224856427, 'eval_perplexity': 187.09615749992685}
+{'eval_loss': 5.231622695922852, 'eval_start_accuracy': 0.04547162720781661, 'eval_end_accuracy': 0.021169986220719028, 'eval_accuracy': 0.03332080671426782, 'eval_runtime': 150.1606, 'eval_samples_per_second': 53.163, 'eval_steps_per_second': 2.218, 'epoch': 1.4, 'eval_perplexity': 187.09615749992685}
+Error: 'eval_loss'
+{'loss': 5.061, 'grad_norm': 9.358597755432129, 'learning_rate': 9.86522435289912e-06, 'epoch': 1.4725371815638346, 'train_perplexity': 157.7481856612201}
+{'loss': 5.061, 'grad_norm': 9.358597755432129, 'learning_rate': 9.86522435289912e-06, 'epoch': 1.47, 'train_perplexity': 157.7481856612201}
+Error: 'loss'
+{'eval_loss': 5.2165422439575195, 'eval_start_accuracy': 0.049104346736815734, 'eval_end_accuracy': 0.02004259050482275, 'eval_accuracy': 0.03457346862081924, 'eval_runtime': 150.1632, 'eval_samples_per_second': 53.162, 'eval_steps_per_second': 2.218, 'epoch': 1.4725371815638346, 'eval_perplexity': 184.29583104877756}
+{'eval_loss': 5.2165422439575195, 'eval_start_accuracy': 0.049104346736815734, 'eval_end_accuracy': 0.02004259050482275, 'eval_accuracy': 0.03457346862081924, 'eval_runtime': 150.1632, 'eval_samples_per_second': 53.162, 'eval_steps_per_second': 2.218, 'epoch': 1.47, 'eval_perplexity': 184.29583104877756}
+Error: 'eval_loss'
+{'loss': 5.0538, 'grad_norm': 9.198134422302246, 'learning_rate': 9.829629131445342e-06, 'epoch': 1.5461640406420263, 'train_perplexity': 156.61647776187087}
+{'loss': 5.0538, 'grad_norm': 9.198134422302246, 'learning_rate': 9.829629131445342e-06, 'epoch': 1.55, 'train_perplexity': 156.61647776187087}
+Error: 'loss'
+{'eval_loss': 5.210245609283447, 'eval_start_accuracy': 0.05123387197795315, 'eval_end_accuracy': 0.02304897908054616, 'eval_accuracy': 0.03714142552924966, 'eval_runtime': 150.0006, 'eval_samples_per_second': 53.22, 'eval_steps_per_second': 2.22, 'epoch': 1.5461640406420263, 'eval_perplexity': 183.1390333170824}
+{'eval_loss': 5.210245609283447, 'eval_start_accuracy': 0.05123387197795315, 'eval_end_accuracy': 0.02304897908054616, 'eval_accuracy': 0.03714142552924966, 'eval_runtime': 150.0006, 'eval_samples_per_second': 53.22, 'eval_steps_per_second': 2.22, 'epoch': 1.55, 'eval_perplexity': 183.1390333170824}
+Error: 'eval_loss'
+{'loss': 5.0141, 'grad_norm': 9.8886137008667, 'learning_rate': 9.789947561577445e-06, 'epoch': 1.619790899720218, 'train_perplexity': 150.52060724026228}
+{'loss': 5.0141, 'grad_norm': 9.8886137008667, 'learning_rate': 9.789947561577445e-06, 'epoch': 1.62, 'train_perplexity': 150.52060724026228}
+Error: 'loss'
+{'eval_loss': 5.20607852935791, 'eval_start_accuracy': 0.04822748340222974, 'eval_end_accuracy': 0.022172115745960164, 'eval_accuracy': 0.03519979957409495, 'eval_runtime': 150.8121, 'eval_samples_per_second': 52.933, 'eval_steps_per_second': 2.208, 'epoch': 1.619790899720218, 'eval_perplexity': 182.37746618534038}
+{'eval_loss': 5.20607852935791, 'eval_start_accuracy': 0.04822748340222974, 'eval_end_accuracy': 0.022172115745960164, 'eval_accuracy': 0.03519979957409495, 'eval_runtime': 150.8121, 'eval_samples_per_second': 52.933, 'eval_steps_per_second': 2.208, 'epoch': 1.62, 'eval_perplexity': 182.37746618534038}
