@@ -288,6 +288,20 @@ class BaseModelOutputWithPastAndCrossAttentions(ModelOutput):
 
 
 @dataclass
+class FeedbackModelOutputWithPastAndCrossAttentions(ModelOutput):
+    """
+    Base class for model's outputs that may also contain a past key/values (to speed up sequential decoding) as well as
+    feedback hidden states terms
+    """
+    last_hidden_state: torch.FloatTensor = None
+    past_key_values: Optional[Tuple[Tuple[torch.FloatTensor]]] = None
+    memory: Optional[Tuple[torch.FloatTensor]] = None,
+    hidden_states: Optional[Tuple[torch.FloatTensor, ...]] = None
+    attentions: Optional[Tuple[torch.FloatTensor, ...]] = None
+    cross_attentions: Optional[Tuple[torch.FloatTensor, ...]] = None
+
+
+@dataclass
 class MoECausalLMOutputWithPast(ModelOutput):
     """
     Base class for causal language model (or autoregressive) outputs as well as Mixture of Expert's router hidden

@@ -166,6 +166,12 @@ class GPT2Attention(nn.Module):
         self.layer_idx = layer_idx
         self.reorder_and_upcast_attn = config.reorder_and_upcast_attn
 
+        # if self.is_cross_attention:
+        #     self.c_attn = Conv1D(2 * self.embed_dim, self.embed_dim)
+        #     self.q_attn = Conv1D(self.embed_dim, self.embed_dim)
+        # else:
+        #     self.c_attn = Conv1D(3 * self.embed_dim, self.embed_dim)
+        
         if self.is_cross_attention:
             self.c_attn = Conv1D(2 * self.embed_dim, self.embed_dim)
             self.q_attn = Conv1D(self.embed_dim, self.embed_dim)
@@ -324,7 +330,9 @@ class GPT2Attention(nn.Module):
             key, value = self.c_attn(encoder_hidden_states).split(self.split_size, dim=2)
             attention_mask = encoder_attention_mask
         else:
-            query, key, value = self.c_attn(hidden_states).split(self.split_size, dim=2)
+            query = self.q_attn(hidden_states)
+            key, value = self.c_attn(encoder_hidden_states).split(self.split_size, dim=2)
+            # query, key, value = self.c_attn(hidden_states).split(self.split_size, dim=2)
 
         query = self._split_heads(query, self.num_heads, self.head_dim)
         key = self._split_heads(key, self.num_heads, self.head_dim)
@@ -394,6 +402,8 @@ class GPT2FlashAttention2(GPT2Attention):
             key, value = self.c_attn(encoder_hidden_states).split(self.split_size, dim=2)
             attention_mask = encoder_attention_mask
         else:
+            # query = self.q_attn(hidden_states)
+            # key, value = self.c_attn(encoder_hidden_states).split(self.split_size, dim=2)
             query, key, value = self.c_attn(hidden_states).split(self.split_size, dim=2)
 
         query = self._split_heads(query, self.num_heads, self.head_dim)
@@ -620,6 +630,8 @@ class GPT2SdpaAttention(GPT2Attention):
             key, value = self.c_attn(encoder_hidden_states).split(self.split_size, dim=2)
             attention_mask = encoder_attention_mask
         else:
+            # query = self.q_attn(hidden_states)
+            # key, value = self.c_attn(encoder_hidden_states).split(self.split_size, dim=2)
             query, key, value = self.c_attn(hidden_states).split(self.split_size, dim=2)
 
         query = self._split_heads(query, self.num_heads, self.head_dim)

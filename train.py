@@ -193,7 +193,7 @@ if args.tuning_mode:
                 output_dir = self.args.output_dir
 
             # self.model.lm_head.weight = torch.nn.Parameter(self.model.transformer.wte.weight.clone())
-            self.model.save_pretrained(output_dir)
+            self.model.save_pretrained(output_dir, safe_serialization=False)
             torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
             self.state.save_to_json(os.path.join(output_dir, "trainer_state.json"))
             # super().save_model(f"{output_dir}/{self.model.__class__.__name__}.param", _internal_call=_internal_call)
@@ -222,7 +222,8 @@ else:
                 output_dir = self.args.output_dir
 
             # self.model.lm_head.weight = torch.nn.Parameter(self.model.transformer.wte.weight.clone())
-            self.model.save_pretrained(output_dir)
+            torch.save(model, "feedback_gpt2.model")
+            self.model.save_pretrained(output_dir, safe_serialization=False)
             torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
             self.state.save_to_json(os.path.join(output_dir, "trainer_state.json"))
             # super().save_model(f"{output_dir}/{self.model.__class__.__name__}.param", _internal_call=_internal_call)
@@ -406,6 +407,18 @@ class SkipIterableDataset(IterableDataset):
                 next(iterator, None)  # 跳过前 n 个样本
         return iterator
 
+class FixDataCollatorForLanguageModeling(DataCollatorForLanguageModeling):
+    def __init__(self, tokenizer, mlm=False, mlm_probability=0.15, return_tensors="pt"):
+        super().__init__(tokenizer=tokenizer, mlm=mlm, mlm_probability=mlm_probability)
+        self.return_tensors = return_tensors
+        
+    def __call__(self, examples):
+        batch = super().__call__(examples)
+        batch['input_ids'][:, -1:] = tokenizer.pad_token_id
+        batch['labels'] = torch.cat((batch['labels'][:, 1:], batch['labels'][:, :1]), dim=-1)
+        batch['labels'][:, -1:] = tokenizer.pad_token_id
+        return batch
+
 
 # def prepare_qa_dataset(examples):
 #     context = examples['story']
@@ -460,6 +473,21 @@ if __name__ == "__main__":
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.pad_token_id = tokenizer.eos_token_id
     model_name = args.model_name
+    
+    try:
+        if args.lora_r:
+            from peft import LoRAConfig, get_peft_model
+            
+            lora_config = LoRAConfig(
+                r=args.lora_r,
+                lora_alpha=args.lora_alpha,
+                lora_dropout=0.1,
+                target_modules=['attn', 'mlp']  # 根据你的模型结构选择适当的模块
+            )
+            model = get_peft_model(model, lora_config)
+    except:
+        pass
+    
     set_seed(37)
 
     #############################
@@ -469,7 +497,7 @@ if __name__ == "__main__":
         # split the dataset into train and validation
         # train_idx = int(len(dataset) * 0.9)
         train_dataset = dataset["train"]  # [:train_idx]  auxiliary_train
-        valid_dataset = dataset["validation"]  # [train_idx:]
+        valid_dataset = dataset["validation"][:args.eval_sample]  # [train_idx:]
         # train_dataset = Dataset.from_dict(train_dataset)
         # valid_dataset = Dataset.from_dict(valid_dataset)
         
@@ -491,6 +519,7 @@ if __name__ == "__main__":
     if args.tuning_mode:
         data_collator = DataCollatorWithPadding(tokenizer)
     else:
+        # data_collator = FixDataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
         data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
         
     print("Process the dataset successfully!")
@@ -504,7 +533,7 @@ if __name__ == "__main__":
                     overwrite_output_dir=True,
                     per_device_train_batch_size=args.batch_size,   # 每个设备的批次大小
                     per_device_eval_batch_size=args.eval_batch_size,
-                    save_total_limit=2,              # 保存模型的总数限制
+                    save_total_limit=10,              # 保存模型的总数限制
                     logging_dir=args.log_dir,
                     learning_rate=args.learning_rate,
                     warmup_steps=args.warmup_steps,
@@ -542,9 +571,9 @@ if __name__ == "__main__":
                             callbacks=[CustomCallback()]
                         )
     
-    if args.checkpoint_dir:
-        trainer_state = TrainerState.load_from_json(os.path.join(args.checkpoint_dir, 'trainer_state.json'))
-        trainer.state = trainer_state
+    # if args.checkpoint_dir:
+    #     trainer_state = TrainerState.load_from_json(os.path.join(args.checkpoint_dir, 'trainer_state.json'))
+    #     trainer.state = trainer_state
     
     trainer.train()
     # try:

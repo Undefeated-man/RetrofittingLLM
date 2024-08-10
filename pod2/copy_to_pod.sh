@@ -6,6 +6,7 @@ kubectl cp /home/eidf018/eidf018/s2484588-epcc/MLP/RetrofittingLLM/train.py retr
 kubectl cp /home/eidf018/eidf018/s2484588-epcc/MLP/RetrofittingLLM/evaluate.py retrofitting-pod-h100-2:/workspace/RetrofittingLLM/evaluate.py
 kubectl cp /home/eidf018/eidf018/s2484588-epcc/MLP/RetrofittingLLM/run.sh retrofitting-pod-h100-2:/workspace/RetrofittingLLM/run.sh
 kubectl cp /home/eidf018/eidf018/s2484588-epcc/MLP/RetrofittingLLM/gpt2_models retrofitting-pod-h100-2:/workspace/RetrofittingLLM/
+kubectl cp /home/eidf018/eidf018/s2484588-epcc/MLP/RetrofittingLLM/tinyllama_models retrofitting-pod-h100:/workspace/RetrofittingLLM/tinyllama_models
 kubectl cp /home/eidf018/eidf018/s2484588-epcc/MLP/RetrofittingLLM/config retrofitting-pod-h100-2:/workspace/RetrofittingLLM/
 kubectl cp /home/eidf018/eidf018/s2484588-epcc/MLP/RetrofittingLLM/llama_models retrofitting-pod-h100-2:/workspace/RetrofittingLLM/
 kubectl cp /home/eidf018/eidf018/s2484588-epcc/MLP/RetrofittingLLM/utils.py retrofitting-pod-h100-2:/workspace/RetrofittingLLM/utils.py

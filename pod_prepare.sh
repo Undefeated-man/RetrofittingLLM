@@ -7,6 +7,7 @@ pip install tokenizers==0.19.1
 pip install huggingface_hub==0.23.4
 pip install scikit-learn
 pip install deepspeed
+pip install peft
 
 apt update
 apt install -y vim screen git

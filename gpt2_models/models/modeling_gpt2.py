@@ -166,11 +166,10 @@ class GPT2Attention(nn.Module):
         self.layer_idx = layer_idx
         self.reorder_and_upcast_attn = config.reorder_and_upcast_attn
 
-        if self.is_cross_attention:
-            self.c_attn = Conv1D(2 * self.embed_dim, self.embed_dim)
-            self.q_attn = Conv1D(self.embed_dim, self.embed_dim)
-        else:
-            self.c_attn = Conv1D(3 * self.embed_dim, self.embed_dim)
+        # if self.is_cross_attention:
+        self.c_attn = Conv1D(2 * self.embed_dim, self.embed_dim)
+        self.q_attn = Conv1D(self.embed_dim, self.embed_dim)
+            
         self.c_proj = Conv1D(self.embed_dim, self.embed_dim)
 
         self.attn_dropout = nn.Dropout(config.attn_pdrop)

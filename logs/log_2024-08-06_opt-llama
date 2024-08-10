@@ -84,3 +84,5 @@
 {'eval_loss': nan, 'eval_runtime': 153.5231, 'eval_samples_per_second': 6.514, 'eval_steps_per_second': 0.208, 'epoch': 0.0075, 'eval_perplexity': nan}
 {'eval_loss': 0.425653338432312, 'eval_runtime': 152.8278, 'eval_samples_per_second': 6.543, 'eval_steps_per_second': 0.209, 'epoch': 0.005, 'eval_perplexity': 1.5305900863950297}
 {'loss': 7.5952, 'grad_norm': 25.885480880737305, 'learning_rate': 3.3333333333333335e-07, 'epoch': 0.00036816140195861867, 'train_perplexity': 1988.6275372377381}
+{'loss': 9.0132, 'grad_norm': 34.1968879699707, 'learning_rate': 3.3333333333333335e-07, 'epoch': 0.00036816140195861867, 'train_perplexity': 8210.75369250748}
+{'loss': 7.8298, 'grad_norm': 25.185815811157227, 'learning_rate': 3.3333333333333335e-07, 'epoch': 0.00036816140195861867, 'train_perplexity': 2514.426437839634}

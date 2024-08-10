@@ -120,9 +120,12 @@ class GPT2Attention(_GPT2Attention):
         if self.is_cross_attention:
             self.c_attn = Conv1D(2 * self.embed_dim, self.embed_dim)
             self.q_attn = Conv1D(self.embed_dim, self.embed_dim)
+            self.splited = True
         else:
+            self.q_attn = Conv1D(self.embed_dim, self.embed_dim)
             self.c_attn = Conv1D(3 * self.embed_dim, self.embed_dim)
             # self.c_attn = Conv1D(2 * self.embed_dim, self.embed_dim)
+            self.splited = False
             
             
         self.c_proj = Conv1D(self.embed_dim, self.embed_dim)
@@ -157,8 +160,8 @@ class GPT2Attention(_GPT2Attention):
         use_cache: Optional[bool] = False,
         output_attentions: Optional[bool] = False,
     ) -> Tuple[Union[torch.Tensor, Tuple[torch.Tensor]], ...]:
-        # if encoder_hidden_states is None:
-        #     self.split_q_kv()
+        if encoder_hidden_states is None:
+            self.split_q_kv()
         
         if memory is not None:
             k, v = memory
@@ -172,11 +175,10 @@ class GPT2Attention(_GPT2Attention):
                     "If class is used as cross attention, the weights `q_attn` have to be defined. "
                     "Please make sure to instantiate class with `GPT2Attention(..., is_cross_attention=True)`."
                 )
-            query = self.q_attn(hidden_states)
             key, value = self.c_attn(encoder_hidden_states).split(self.split_size, dim=2)
             attention_mask = encoder_attention_mask
         else:
-            query, key, value = self.c_attn(hidden_states).split(self.split_size, dim=2)
+            key, value = self.c_attn(hidden_states).split(self.split_size, dim=2)
         
         if hidden_states.shape[1] > 1:
             key = safe_cat(k, key, dim = -2)
@@ -240,8 +242,8 @@ class GPT2SdpaAttention(GPT2Attention):
         output_attentions: Optional[bool] = False,
     ) -> Tuple[Union[torch.Tensor, Tuple[torch.Tensor]], ...]:
         # print(self.splited, self.c_attn.weight.data.shape)
-        # if encoder_hidden_states is None:
-        #     self.split_q_kv()
+        if encoder_hidden_states is None:
+            self.split_q_kv()
         # print(self.splited, self.c_attn.weight.data.shape)
         
         if output_attentions or head_mask is not None:
@@ -267,7 +269,7 @@ class GPT2SdpaAttention(GPT2Attention):
 
         # Initial attention projections
         is_cross_attention = encoder_hidden_states is not None
-        
+        query = self.q_attn(hidden_states)
         if memory is not None:
             k, v = memory
         else:
@@ -279,12 +281,12 @@ class GPT2SdpaAttention(GPT2Attention):
                     "If class is used as cross attention, the weights `q_attn` have to be defined. "
                     "Please make sure to instantiate class with `GPT2Attention(..., is_cross_attention=True)`."
                 )
-            query = self.q_attn(hidden_states)
+
             key, value = self.c_attn(encoder_hidden_states).split(self.split_size, dim=2)
             attention_mask = encoder_attention_mask
         else:
             # print(hidden_states.shape, self.c_attn.weight.data.shape, self.split_size)
-            query, key, value = self.c_attn(hidden_states).split(self.split_size, dim=2)
+            key, value = self.c_attn(hidden_states).split(self.split_size, dim=2)
         
         if hidden_states.shape[1] > 1:
             key = safe_cat(k, key, dim = -2)
@@ -450,13 +452,12 @@ class GPT2Model(_GPT2Model):
         # memory parameters
         self.layer_weight = nn.Parameter(torch.ones(config.num_hidden_layers))
         # Only share in cross-attention layers
-        self.shared_kv_proj = shared_kv_proj
-        # self.shared_kv_proj = Conv1D(2 * self.embed_dim, self.embed_dim)
-        # if shared_kv_proj.weight.data.shape[-1] == 2304:
-        #     _, k, v = torch.split(shared_kv_proj.weight.data, self.embed_dim, dim = 1)
-        #     self.shared_kv_proj.weight.data = torch.cat((k, v), dim=1)
-        # else:
-        #     self.shared_kv_proj = shared_kv_proj
+        self.shared_kv_proj = Conv1D(2 * self.embed_dim, self.embed_dim)
+        if shared_kv_proj.weight.data.shape[-1] == 2304:
+            _, k, v = torch.split(shared_kv_proj.weight.data, self.embed_dim, dim = 1)
+            self.shared_kv_proj.weight.data = torch.cat((k, v), dim=1)
+        else:
+            self.shared_kv_proj = shared_kv_proj
         self.mem_len = 10   # memory length
         
         # Model parallel
