@@ -1439,7 +1439,7 @@ class LlamaForQuestionAnswering(LlamaPreTrainedModel):
     # Copied from transformers.models.bloom.modeling_bloom.BloomForQuestionAnswering.__init__ with Bloom->Llama
     def __init__(self, config):
         super().__init__(config)
-        self.model = LlamaModel(config)
+        self.transformer = LlamaModel(config)
         self.qa_outputs = nn.Linear(config.hidden_size, 2)
 
         # Initialize weights and apply final processing
@@ -1477,7 +1477,7 @@ class LlamaForQuestionAnswering(LlamaPreTrainedModel):
         """
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
-        outputs = self.model(
+        outputs = self.transformer(
             input_ids,
             attention_mask=attention_mask,
             position_ids=position_ids,

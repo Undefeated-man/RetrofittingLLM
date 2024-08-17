@@ -50,7 +50,7 @@ from transformerlib.models.gpt2.modeling_gpt2 import (
     GPT2LMHeadModel as _GPT2ForCausalLM,
     GPT2ForQuestionAnswering as _GPT2ForQuestionAnswering,
     GPT2Attention as _GPT2Attention,
-    GPT2SdpaAttention as _GPT2SdpaAttention,
+    GPT2ForSequenceClassification as _GPT2ForSequenceClassification,
     GPT2Block as _GPT2Block,
     # GPT2FlashAttention2 as _GPT2FlashAttention2,
     GPT2MLP,
@@ -120,9 +120,12 @@ class GPT2Attention(_GPT2Attention):
         if self.is_cross_attention:
             self.c_attn = Conv1D(2 * self.embed_dim, self.embed_dim)
             self.q_attn = Conv1D(self.embed_dim, self.embed_dim)
+            self.splited = True
         else:
+            self.q_attn = Conv1D(self.embed_dim, self.embed_dim)
             self.c_attn = Conv1D(3 * self.embed_dim, self.embed_dim)
             # self.c_attn = Conv1D(2 * self.embed_dim, self.embed_dim)
+            self.splited = False
             
             
         self.c_proj = Conv1D(self.embed_dim, self.embed_dim)
@@ -157,13 +160,8 @@ class GPT2Attention(_GPT2Attention):
         use_cache: Optional[bool] = False,
         output_attentions: Optional[bool] = False,
     ) -> Tuple[Union[torch.Tensor, Tuple[torch.Tensor]], ...]:
-        # if encoder_hidden_states is None:
-        #     self.split_q_kv()
-        
-        if memory is not None:
-            k, v = memory
-        else:
-            k, v = None, None
+        if encoder_hidden_states is None:
+            self.split_q_kv()
         
         query = self.q_attn(hidden_states)
         if encoder_hidden_states is not None:
@@ -172,15 +170,10 @@ class GPT2Attention(_GPT2Attention):
                     "If class is used as cross attention, the weights `q_attn` have to be defined. "
                     "Please make sure to instantiate class with `GPT2Attention(..., is_cross_attention=True)`."
                 )
-            query = self.q_attn(hidden_states)
             key, value = self.c_attn(encoder_hidden_states).split(self.split_size, dim=2)
             attention_mask = encoder_attention_mask
         else:
-            query, key, value = self.c_attn(hidden_states).split(self.split_size, dim=2)
-        
-        if hidden_states.shape[1] > 1:
-            key = safe_cat(k, key, dim = -2)
-            value = safe_cat(v, value, dim = -2)
+            key, value = self.c_attn(hidden_states).split(self.split_size, dim=2)
 
         query = self._split_heads(query, self.num_heads, self.head_dim)
         key = self._split_heads(key, self.num_heads, self.head_dim)
@@ -240,8 +233,8 @@ class GPT2SdpaAttention(GPT2Attention):
         output_attentions: Optional[bool] = False,
     ) -> Tuple[Union[torch.Tensor, Tuple[torch.Tensor]], ...]:
         # print(self.splited, self.c_attn.weight.data.shape)
-        # if encoder_hidden_states is None:
-        #     self.split_q_kv()
+        if encoder_hidden_states is None:
+            self.split_q_kv()
         # print(self.splited, self.c_attn.weight.data.shape)
         
         if output_attentions or head_mask is not None:
@@ -267,28 +260,19 @@ class GPT2SdpaAttention(GPT2Attention):
 
         # Initial attention projections
         is_cross_attention = encoder_hidden_states is not None
-        
-        if memory is not None:
-            k, v = memory
-        else:
-            k, v = None, None
-            
+        query = self.q_attn(hidden_states)
         if encoder_hidden_states is not None:
             if not hasattr(self, "q_attn"):
                 raise ValueError(
                     "If class is used as cross attention, the weights `q_attn` have to be defined. "
                     "Please make sure to instantiate class with `GPT2Attention(..., is_cross_attention=True)`."
                 )
-            query = self.q_attn(hidden_states)
+
             key, value = self.c_attn(encoder_hidden_states).split(self.split_size, dim=2)
             attention_mask = encoder_attention_mask
         else:
             # print(hidden_states.shape, self.c_attn.weight.data.shape, self.split_size)
-            query, key, value = self.c_attn(hidden_states).split(self.split_size, dim=2)
-        
-        if hidden_states.shape[1] > 1:
-            key = safe_cat(k, key, dim = -2)
-            value = safe_cat(v, value, dim = -2)
+            key, value = self.c_attn(hidden_states).split(self.split_size, dim=2)
 
         query = self._split_heads(query, self.num_heads, self.head_dim)
         key = self._split_heads(key, self.num_heads, self.head_dim)
@@ -428,36 +412,35 @@ class GPT2Model(_GPT2Model):
         self.wpe = nn.Embedding(config.max_position_embeddings, self.embed_dim)
 
         self.drop = nn.Dropout(config.embd_pdrop)
-        # self.h = nn.ModuleList([GPT2Block(config, layer_idx=i) for i in range(config.num_hidden_layers)])
-        self.h = nn.ModuleList([])
-        shared_kv_proj = None
-        self.ln_f = nn.LayerNorm(self.embed_dim, eps=config.layer_norm_epsilon)
+        self.h = nn.ModuleList([GPT2Block(config, layer_idx=i) for i in range(config.num_hidden_layers)])
+        # self.h = nn.ModuleList([])
+        # shared_kv_proj = None
+        # self.ln_f = nn.LayerNorm(self.embed_dim, eps=config.layer_norm_epsilon)
         
-        for i in range(config.num_hidden_layers):
-            block = GPT2Block(config=config, layer_idx=i)
-            attn = block.attn
-            # ff = block.mlp
+        # for i in range(config.num_hidden_layers):
+        #     block = GPT2Block(config=config, layer_idx=i)
+        #     attn = block.attn
+        #     # ff = block.mlp
             
-            shared_kv_proj = default(shared_kv_proj, attn.c_attn)
-            attn.c_attn = shared_kv_proj
+        #     shared_kv_proj = default(shared_kv_proj, attn.c_attn)
+        #     attn.c_attn = shared_kv_proj
 
-            # if config.seqlen == 1:
-            #     memory_is_empty = lambda *args, **kwargs: not exists(kwargs['memory'])
-            #     attn = SkipIf(memory_is_empty, attn)
+        #     # if config.seqlen == 1:
+        #     #     memory_is_empty = lambda *args, **kwargs: not exists(kwargs['memory'])
+        #     #     attn = SkipIf(memory_is_empty, attn)
 
-            self.h.append(block)
+        #     self.h.append(block)
 
         # memory parameters
-        self.layer_weight = nn.Parameter(torch.ones(config.num_hidden_layers))
+        # self.layer_weight = nn.Parameter(torch.ones(config.num_hidden_layers))
         # Only share in cross-attention layers
-        self.shared_kv_proj = shared_kv_proj
         # self.shared_kv_proj = Conv1D(2 * self.embed_dim, self.embed_dim)
         # if shared_kv_proj.weight.data.shape[-1] == 2304:
         #     _, k, v = torch.split(shared_kv_proj.weight.data, self.embed_dim, dim = 1)
         #     self.shared_kv_proj.weight.data = torch.cat((k, v), dim=1)
         # else:
         #     self.shared_kv_proj = shared_kv_proj
-        self.mem_len = 10   # memory length
+        # self.mem_len = 10   # memory length
         
         # Model parallel
         self.model_parallel = False
@@ -597,8 +580,8 @@ class GPT2Model(_GPT2Model):
                 )
                 use_cache = False
 
-        layer_weight = self.layer_weight.softmax(dim = -1)
-        layer_weight = layer_weight.view(layer_weight.shape[0], 1, 1, 1)
+        # layer_weight = self.layer_weight.softmax(dim = -1)
+        # layer_weight = layer_weight.view(layer_weight.shape[0], 1, 1, 1)
         
         presents = () if use_cache else None
         all_self_attentions = () if output_attentions else None
@@ -660,17 +643,17 @@ class GPT2Model(_GPT2Model):
                     if i == v[-1] and "cuda:" + str(k) != self.last_device:
                         hidden_states = hidden_states.to("cuda:" + str(k + 1))
         
-        hiddens = torch.stack(all_hidden_states)
-        agg_hiddens = (hiddens * layer_weight).sum(dim = 0)
+        # hiddens = torch.stack(all_hidden_states)
+        # agg_hiddens = (hiddens * layer_weight).sum(dim = 0)
         
-        mem_k, mem_v = self.shared_kv_proj(agg_hiddens).chunk(2, dim = -1)
-        # if memory_keys:
-        #     print(memory_keys.shape)
-        memory_keys = safe_cat(memory_keys, mem_k, dim = 1)
-        memory_values = safe_cat(memory_values, mem_v, dim = 1)
-        memory_keys = memory_keys[:, -self.mem_len:]
-        memory_values = memory_values[:, -self.mem_len:]
-        memory = (memory_keys, memory_values)
+        # mem_k, mem_v = self.shared_kv_proj(agg_hiddens).chunk(2, dim = -1)
+        # # if memory_keys:
+        # #     print(memory_keys.shape)
+        # memory_keys = safe_cat(memory_keys, mem_k, dim = 1)
+        # memory_values = safe_cat(memory_values, mem_v, dim = 1)
+        # memory_keys = memory_keys[:, -self.mem_len:]
+        # memory_values = memory_values[:, -self.mem_len:]
+        # memory = (memory_keys, memory_values)
         
         hidden_states = self.ln_f(hidden_states)
 
@@ -720,6 +703,23 @@ class GPT2ForQuestionAnswering(_GPT2ForQuestionAnswering):
         self.num_labels = config.num_labels
         self.transformer = GPT2Model(config)
         self.qa_outputs = nn.Linear(config.hidden_size, 2)
+
+        # Model parallel
+        self.model_parallel = False
+        self.device_map = None
+
+        # Initialize weights and apply final processing
+        self.post_init()
+
+
+class GPT2ForSequenceClassification(_GPT2ForSequenceClassification):
+    config_class = OptGPT2Config
+    
+    def __init__(self, config):
+        super().__init__(config)
+        self.num_labels = config.num_labels
+        self.transformer = GPT2Model(config)
+        self.score = nn.Linear(config.n_embd, self.num_labels, bias=False)
 
         # Model parallel
         self.model_parallel = False

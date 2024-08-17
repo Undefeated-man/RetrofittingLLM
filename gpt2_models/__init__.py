@@ -1,7 +1,7 @@
 from .configuration_gpt2 import OptGPT2Config
 # from transformers.models.gpt2.configuration_gpt2 import GPT2Config
-from .modeling_gpt2_opt import GPT2ForCausalLM as OptGPT2ForCausalLM
-from .modeling_gpt2_opt import GPT2ForQuestionAnswering
+from .modeling_gpt2_opt_only_self_attn import GPT2ForCausalLM as OptGPT2ForCausalLM
+from .modeling_gpt2_opt_only_self_attn import GPT2ForQuestionAnswering
 
 # from .modeling_gpt2_cla import LlamaForCausalLM as ClaGPT2ForCausalLM
 from .configuration_gpt2 import ClaGPT2Config

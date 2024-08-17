@@ -166,6 +166,16 @@ def evaluate(model, dataloader, load_weights_pth=None):
     return perx
     
 
+def slicing_with_window(dicts, window_size, step):
+    res = []
+    for i in range(0, dicts["input_ids"].shape[1] - window_size + 1, step):
+        slice_dict = {}
+        for key, value in dicts.items():
+            slice_dict[key] = value[:, i:i+window_size]
+        res.append(slice_dict)
+    return res
+
+
 class CustomCallback(TrainerCallback):
     def on_log(self, args, state, control, logs=None, **kwargs):
         # 自定义日志记录逻辑
@@ -187,47 +197,115 @@ class CustomCallback(TrainerCallback):
 
 
 if args.tuning_mode:
-    class CustomTrainer(Trainer):
-        def save_model(self, output_dir=None, _internal_call=False):
-            if output_dir is None:
-                output_dir = self.args.output_dir
+    if args.eval_dataset == "stanfordnlp/coqa":
+        class CustomTrainer(Trainer):
+            def save_model(self, output_dir=None, _internal_call=False):
+                if output_dir is None:
+                    output_dir = self.args.output_dir
 
-            # self.model.lm_head.weight = torch.nn.Parameter(self.model.transformer.wte.weight.clone())
-            self.model.save_pretrained(output_dir, safe_serialization=False)
-            torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
-            self.state.save_to_json(os.path.join(output_dir, "trainer_state.json"))
-            # super().save_model(f"{output_dir}/{self.model.__class__.__name__}.param", _internal_call=_internal_call)
-            # self.model.lm_head.weight = self.model.transformer.wte.weight
+                # self.model.lm_head.weight = torch.nn.Parameter(self.model.transformer.wte.weight.clone())
+                self.model.save_pretrained(output_dir, safe_serialization=False)
+                torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
+                self.state.save_to_json(os.path.join(output_dir, "trainer_state.json"))
+                # super().save_model(f"{output_dir}/{self.model.__class__.__name__}.param", _internal_call=_internal_call)
+                # self.model.lm_head.weight = self.model.transformer.wte.weight
+                
+            def compute_loss(self, model, inputs, return_outputs=False):
+                """For QA task"""
+                start_positions = inputs.pop("start_positions")
+                end_positions = inputs.pop("end_positions")
+                
+                # 获取模型输出
+                outputs = model(**inputs)
+                start_logits = outputs.start_logits
+                end_logits = outputs.end_logits
+                
+                # 计算损失
+                loss_fct = nn.CrossEntropyLoss()
+                start_loss = loss_fct(start_logits, start_positions)
+                end_loss = loss_fct(end_logits, end_positions)
+                loss = (start_loss + end_loss) / 2
+                return (loss, outputs) if return_outputs else loss
             
-        def compute_loss(self, model, inputs, return_outputs=False):
-            """For QA task"""
-            start_positions = inputs.pop("start_positions")
-            end_positions = inputs.pop("end_positions")
-            
-            # 获取模型输出
-            outputs = model(**inputs)
-            start_logits = outputs.start_logits
-            end_logits = outputs.end_logits
-            
-            # 计算损失
-            loss_fct = nn.CrossEntropyLoss()
-            start_loss = loss_fct(start_logits, start_positions)
-            end_loss = loss_fct(end_logits, end_positions)
-            loss = (start_loss + end_loss) / 2
-            return (loss, outputs) if return_outputs else loss
+    elif args.eval_dataset == "EleutherAI/lambada_openai":
+        class CustomTrainer(Trainer):
+            def save_model(self, output_dir=None, _internal_call=False):
+                if output_dir is None:
+                    output_dir = self.args.output_dir
+
+                # self.model.lm_head.weight = torch.nn.Parameter(self.model.transformer.wte.weight.clone())
+                self.model.save_pretrained(output_dir, safe_serialization=False)
+                torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
+                self.state.save_to_json(os.path.join(output_dir, "trainer_state.json"))
+                # super().save_model(f"{output_dir}/{self.model.__class__.__name__}.param", _internal_call=_internal_call)
+                # self.model.lm_head.weight = self.model.transformer.wte.weight
+
+            def compute_loss(self, model, inputs, return_outputs=False):
+                # 获取输入
+                labels = inputs.pop("labels")
+                # 前向传播
+                outputs = model(**inputs)
+                logits = outputs.logits
+    
+                # 获取最后一个token的预测结果
+                # predicted_token_id = torch.argmax(logits[:, -1, :], dim=-1)
+                # 计算损失
+                # print(predicted_token_id)
+                loss = nn.CrossEntropyLoss()(logits[torch.arange(logits.size(0)), labels[:, 1].view(-1), :], labels[:, 0].view(-1))
+                return (loss, outputs) if return_outputs else loss
 else:
-    class CustomTrainer(Trainer):
-        def save_model(self, output_dir=None, _internal_call=False):
-            if output_dir is None:
-                output_dir = self.args.output_dir
+    if "feedback" in args.model_name:
+        class CustomTrainer(Trainer):
+            def save_model(self, output_dir=None, _internal_call=False):
+                if output_dir is None:
+                    output_dir = self.args.output_dir
 
-            # self.model.lm_head.weight = torch.nn.Parameter(self.model.transformer.wte.weight.clone())
-            torch.save(model, "feedback_gpt2.model")
-            self.model.save_pretrained(output_dir, safe_serialization=False)
-            torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
-            self.state.save_to_json(os.path.join(output_dir, "trainer_state.json"))
-            # super().save_model(f"{output_dir}/{self.model.__class__.__name__}.param", _internal_call=_internal_call)
-            # self.model.lm_head.weight = self.model.transformer.wte.weight
+                # self.model.lm_head.weight = torch.nn.Parameter(self.model.transformer.wte.weight.clone())
+                torch.save(model, f"{model.__class__.__name__}.model")
+                self.model.save_pretrained(output_dir, safe_serialization=False)
+                torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
+                self.state.save_to_json(os.path.join(output_dir, "trainer_state.json"))
+                # super().save_model(f"{output_dir}/{self.model.__class__.__name__}.param", _internal_call=_internal_call)
+                # self.model.lm_head.weight = self.model.transformer.wte.weight
+            
+            # def compute_loss(self, model, inputs, return_outputs=False):
+            #     # 获取模型输入并传递past_key_values
+            #     memory = None
+            #     past_key_values = None
+            #     loss = None
+            #     slice_len = args.max_input_length//10
+                
+            #     for input in slicing_with_window(inputs, slice_len, slice_len//2):
+            #         # print(input)
+            #         if memory is not None:
+            #             input['memory'] = memory
+            #             input['past_key_values'] = past_key_values
+            #         # 模型前向传播
+            #         # print(f"loss before: {loss}")
+            #         outputs = model(**input)
+            #         # 更新past_key_values
+            #         memory = outputs.memory
+            #         past_key_values = outputs.past_key_values
+            #         # compute loss
+            #         if loss is None:
+            #             loss = outputs.loss
+            #         else:
+            #             loss += outputs.loss
+            #         # print(f"loss after: {loss}")
+            #     return (loss, outputs) if return_outputs else loss
+    else:
+        class CustomTrainer(Trainer):
+            def save_model(self, output_dir=None, _internal_call=False):
+                if output_dir is None:
+                    output_dir = self.args.output_dir
+
+                # self.model.lm_head.weight = torch.nn.Parameter(self.model.transformer.wte.weight.clone())
+                torch.save(model, f"{model.__class__.__name__}.model")
+                self.model.save_pretrained(output_dir, safe_serialization=False)
+                torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
+                self.state.save_to_json(os.path.join(output_dir, "trainer_state.json"))
+                # super().save_model(f"{output_dir}/{self.model.__class__.__name__}.param", _internal_call=_internal_call)
+                # self.model.lm_head.weight = self.model.transformer.wte.weight
     
     # def training_step(self, model, inputs):
     #     model.train()
@@ -246,6 +324,17 @@ else:
 
     #     loss.backward()
     #     return loss.detach()
+
+
+def pad_sequences_with_lengths(sequences, max_len, padding_value=-100):
+    # 保存每个序列的有效长度
+    lengths = torch.tensor(len(sequences))
+    sequences = torch.tensor(sequences)
+    # 初始化填充后的张量
+    padded_sequences = torch.full((max_len,), padding_value, dtype=lengths.dtype)
+    # 进行填充
+    padded_sequences[:lengths] = sequences
+    return padded_sequences, lengths
 
 
 def process_with_retry(func, retries=3, delay=60, **kwargs):
@@ -291,6 +380,33 @@ def prepare_eval(samples, batch_size):
         yield tokenizer(res[batch_index:batch_index+batch_size], return_tensors='pt', truncation=True, \
             padding='max_length', max_length=args.max_input_length), ans[batch_index:batch_index+batch_size]
         batch_index += batch_size
+
+
+@process_with_retry
+def preprocess_cl_function(examples):
+    inputs = []
+    labels = []
+    
+    for text in examples['text']:
+        # 分割文本，将最后一个词作为标签
+        split_text = text.split()
+        if len(split_text) < 2:
+            continue
+        
+        input_text = " ".join(split_text[:-1])
+        label_text = split_text[-1]
+        
+        # 对输入和标签分别进行分词
+        input_ids = tokenizer(input_text, truncation=True, max_length=args.max_input_length)["input_ids"]
+        input_ids, length = pad_sequences_with_lengths(input_ids, args.max_input_length, padding_value=tokenizer.pad_token_id)
+        label_id = tokenizer(label_text, add_special_tokens=False)["input_ids"][0] # use the only first token
+        label_id = torch.tensor([label_id, length])
+        
+        inputs.append(input_ids)
+        labels.append(label_id)
+    
+    # 返回一个字典，包含输入和标签
+    return {"input_ids": inputs, "labels": labels}
 
 
 @process_with_retry
@@ -378,6 +494,28 @@ def prepare_qa_dataset(examples):
     }
     
     return output
+
+
+def compute_acc(pred):
+    labels = pred.label_ids
+    print(labels)
+    t = pred.predictions[1]
+    if len(t.shape) == 3:
+        preds = t[:, -1, :].argmax(-1)
+    else:
+        preds = pred.predictions[:, -1, :].argmax(-1)
+    # preds = t[:, -1, :].argmax(-1)
+    
+    # 去除填充部分的影响
+    if len(t.shape) == 3:
+        mask = labels != -100
+        labels = labels[mask]
+        preds = preds[mask]
+    
+    # 计算准确率
+    # print(labels, preds)
+    accuracy = (preds == labels[:, 0]).astype(np.float32).mean().item()
+    return {"accuracy": accuracy}
 
 
 def compute_qa_metrics(p):
@@ -493,20 +631,34 @@ if __name__ == "__main__":
     #############################
     if args.tuning_mode:
         print(f"\nTuning on: {args.tuning_set}")
-        dataset = load_dataset(args.tuning_set)
-        # split the dataset into train and validation
-        # train_idx = int(len(dataset) * 0.9)
-        train_dataset = dataset["train"]  # [:train_idx]  auxiliary_train
-        valid_dataset = dataset["validation"][:args.eval_sample]  # [train_idx:]
-        # train_dataset = Dataset.from_dict(train_dataset)
-        # valid_dataset = Dataset.from_dict(valid_dataset)
-        
-        try:
-            tokenized_train_dataset = Dataset.from_dict(prepare_qa_dataset(train_dataset))
-            tokenized_valid_dataset = Dataset.from_dict(prepare_qa_dataset(valid_dataset))
-        except:
-            tokenized_train_dataset = train_dataset.map(prepare_qa_dataset)
-            tokenized_valid_dataset = valid_dataset.map(prepare_qa_dataset)
+        if args.eval_dataset == "stanfordnlp/coqa":
+            dataset = load_dataset(args.tuning_set)
+            # split the dataset into train and validation
+            # train_idx = int(len(dataset) * 0.9)
+            train_dataset = dataset["train"]  # [:train_idx]  auxiliary_train
+            valid_dataset = dataset["validation"][:args.eval_sample]  # [train_idx:]
+            # train_dataset = Dataset.from_dict(train_dataset)
+            # valid_dataset = Dataset.from_dict(valid_dataset)
+            
+            try:
+                tokenized_train_dataset = Dataset.from_dict(prepare_qa_dataset(train_dataset))
+                tokenized_valid_dataset = Dataset.from_dict(prepare_qa_dataset(valid_dataset))
+            except:
+                tokenized_train_dataset = train_dataset.map(prepare_qa_dataset)
+                tokenized_valid_dataset = valid_dataset.map(prepare_qa_dataset)
+        elif args.eval_dataset == "EleutherAI/lambada_openai":
+            dataset = load_dataset(args.tuning_set, trust_remote_code=True, split="test").shuffle(seed=37)
+            # split the dataset into train and validation
+            # train_idx = int(len(dataset) * 0.9)
+            dataset = dataset.train_test_split(test_size=0.2, seed=37)
+            train_dataset = dataset["train"]
+            valid_dataset = dataset["test"][:args.eval_sample]
+            valid_dataset = Dataset.from_dict(valid_dataset)
+            
+            tokenized_train_dataset = train_dataset.map(preprocess_cl_function, batched=True)
+            tokenized_valid_dataset = valid_dataset.map(preprocess_cl_function, batched=True)
+            tokenized_train_dataset = tokenized_train_dataset.map(lambda x: tokenizer.pad(x, padding="max_length"), batched=True)
+            tokenized_valid_dataset = tokenized_valid_dataset.map(lambda x: tokenizer.pad(x, padding="max_length"), batched=True)
     else:
         print(f"\nPretraining on: {args.dataset}")
         dataset = load_dataset(args.dataset, streaming=True)
@@ -517,7 +669,10 @@ if __name__ == "__main__":
         tokenized_valid_dataset = valid_dataset.map(preprocess_function, batched=True)
     
     if args.tuning_mode:
-        data_collator = DataCollatorWithPadding(tokenizer)
+        if args.eval_dataset == "stanfordnlp/coqa":
+            data_collator = DataCollatorWithPadding(tokenizer)
+        elif args.eval_dataset == "EleutherAI/lambada_openai":
+            data_collator = None
     else:
         # data_collator = FixDataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
         data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
@@ -549,17 +704,30 @@ if __name__ == "__main__":
                     save_steps = args.save_steps
                 )
     
+    # print(tokenized_valid_dataset)
     if args.tuning_mode:
-        trainer = CustomTrainer(
-                        model=model,
-                        args=training_args,
-                        data_collator=data_collator,
-                        train_dataset=tokenized_train_dataset,
-                        eval_dataset=tokenized_valid_dataset,
-                        tokenizer=tokenizer,
-                        compute_metrics=compute_qa_metrics,
-                        callbacks=[CustomCallback()]
-                    )
+        if args.eval_dataset == "stanfordnlp/coqa":
+            trainer = CustomTrainer(
+                            model=model,
+                            args=training_args,
+                            data_collator=data_collator,
+                            train_dataset=tokenized_train_dataset,
+                            eval_dataset=tokenized_valid_dataset,
+                            tokenizer=tokenizer,
+                            compute_metrics=compute_qa_metrics,
+                            callbacks=[CustomCallback()]
+                        )
+        elif args.eval_dataset == "EleutherAI/lambada_openai":
+            trainer = CustomTrainer(
+                            model=model,
+                            args=training_args,
+                            data_collator=data_collator,
+                            train_dataset=tokenized_train_dataset,
+                            eval_dataset=tokenized_valid_dataset,
+                            tokenizer=tokenizer,
+                            compute_metrics=compute_acc,
+                            callbacks=[CustomCallback()]
+                        )
     else:
         trainer = CustomTrainer(
                             model=model,

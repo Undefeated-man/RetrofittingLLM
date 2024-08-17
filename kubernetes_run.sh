@@ -1,1 +1,1 @@
-python train.py >> logs/gpt2_new.log
+python train.py >> logs/gemma.log
