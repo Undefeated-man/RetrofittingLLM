@@ -498,7 +498,6 @@ def prepare_qa_dataset(examples):
 
 def compute_acc(pred):
     labels = pred.label_ids
-    print(labels)
     t = pred.predictions[1]
     if len(t.shape) == 3:
         preds = t[:, -1, :].argmax(-1)

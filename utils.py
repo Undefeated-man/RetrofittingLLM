@@ -264,7 +264,7 @@ def get_model(args):
     
     elif args.model_name == "feedback-tinyllama":
         print("Model: feedback-tinyllama")
-        tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b-hf")
+        tokenizer = AutoTokenizer.from_pretrained("TinyLlama/TinyLlama_v1.1")
         
         # import llama_models.modeling_llama_opt as modeling_llama_opt
         from tinyllama_models.modeling_llama_opt import LlamaForCausalLM, LlamaForQuestionAnswering
@@ -294,7 +294,7 @@ def get_model(args):
                     if args.config_pth:
                         config = AutoConfig.from_pretrained(args.config_pth)
                     else:
-                        config = AutoConfig.from_pretrained("meta-llama/Llama-2-7b-hf")
+                        config = AutoConfig.from_pretrained("TinyLlama/TinyLlama_v1.1")
                         
                     qa_model = LlamaForQuestionAnswering(config)
                     qa_model.transformer = model.model
@@ -306,12 +306,12 @@ def get_model(args):
             if args.config_pth:
                 config = AutoConfig.from_pretrained(args.config_pth)
             else:
-                config = AutoConfig.from_pretrained("meta-llama/Llama-2-7b-hf")
+                config = AutoConfig.from_pretrained("TinyLlama/TinyLlama_v1.1")
             model = LlamaForCausalLM(config=config)
             copy_model_params(pretrained_model, model)
             
-    elif args.model_name == "gemma":
-        print("Model: gemma")
+    elif args.model_name[:5] == "gemma":
+        print("Model: gemma2")
         tokenizer = AutoTokenizer.from_pretrained("google/gemma-2-2b")
         
         from transformerlib.models.gemma2 import modeling_gemma2 as gemma
@@ -331,6 +331,37 @@ def get_model(args):
                     model = qa_model
         else:
             config = AutoConfig.from_pretrained("google/gemma-2-2b")
-            model = gemma.Gemma2ForCausalLM.from_pretrained("google/gemma-2-2b", attn_implementation='eager')
+            # model = gemma.Gemma2ForCausalLM.from_pretrained("google/gemma-2-2b", attn_implementation='eager')
+            model = gemma.Gemma2ForQuestionAnswering.from_pretrained("google/gemma-2-2b", attn_implementation='eager')
+            
+    elif args.model_name[:14] == "feedback-gemma":
+        print("Model: feedback-gemma2")
+        tokenizer = AutoTokenizer.from_pretrained("google/gemma-2-2b")
+        
+        from transformerlib.models.gemma2 import modeling_gemma2 as gemma
+        from gemma_models.modeling_gemma import Gemma2ForCausalLM, Gemma2ForQuestionAnswering
+        if args.checkpoint_dir:
+            model = gemma.Gemma2ForCausalLM.from_pretrained("google/gemma-2-2b", attn_implementation='eager')  # args.checkpoint_dir) 
+            # model = torch.load("tinyllama.model")
+                
+            if args.eval_dataset:
+                if args.eval_dataset == "stanfordnlp/coqa":
+                    print("Training for QA tasks")
+                    config = AutoConfig.from_pretrained("google/gemma-2-2b")
+                        
+                    qa_model = Gemma2ForQuestionAnswering(config)
+                    qa_model.transformer = model.model
+                    # if qa_model.qa_outputs.bias is not None:
+                    #     torch.nn.init.zeros_(qa_model.qa_outputs.bias)
+                    model = qa_model
+        else:
+            pretrained_model = Gemma2ForCausalLM.from_pretrained("google/gemma-2-2b", attn_implementation='eager')
+            if args.config_pth:
+                config = AutoConfig.from_pretrained(args.config_pth)
+            else:
+                config = AutoConfig.from_pretrained("google/gemma-2-2b")
+            model = Gemma2ForCausalLM(config=config)
+            copy_model_params(pretrained_model, model)
+            # model = gemma.Gemma2ForQuestionAnswering.from_pretrained("google/gemma-2-2b", attn_implementation='eager')
     
     return tokenizer, model
