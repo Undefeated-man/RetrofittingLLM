@@ -597,3 +597,17 @@ Error: 'eval_loss'
 {'train_runtime': 11762.8445, 'train_samples_per_second': 2.55, 'train_steps_per_second': 0.255, 'train_loss': 5.319003735860189, 'epoch': 0.28}
 Error: 'loss'
 {'eval_loss': 5.150623321533203, 'eval_start_accuracy': 0.043588123815540114, 'eval_end_accuracy': 0.026531901452937462, 'eval_accuracy': 0.03506001263423879, 'eval_runtime': 87.9817, 'eval_samples_per_second': 17.992, 'eval_steps_per_second': 17.992, 'epoch': 0.27612359292019106, 'eval_perplexity': 172.53900408211257}
+Model: feedback-gemma2
+
+Tuning on: EleutherAI/lambada_openai
+Process the dataset successfully!
+[2024-08-19 00:28:09,472] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io: please install the libaio-dev package with apt
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+Error: 'eval_loss'
+{'loss': 6.7867, 'grad_norm': nan, 'learning_rate': 0.0, 'epoch': 0.0048520135856380394, 'train_perplexity': 885.9849818911814}
+{'loss': 6.7867, 'grad_norm': nan, 'learning_rate': 0.0, 'epoch': 0.0, 'train_perplexity': 885.9849818911814}
+Error: 'eval_loss'
+{'loss': 1.5274, 'grad_norm': 18.443357467651367, 'learning_rate': 4.600000000000001e-06, 'epoch': 0.242600679281902, 'train_perplexity': 4.60618515848007}
+{'loss': 1.5274, 'grad_norm': 18.443357467651367, 'learning_rate': 4.600000000000001e-06, 'epoch': 0.24, 'train_perplexity': 4.60618515848007}

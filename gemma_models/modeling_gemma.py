@@ -63,7 +63,7 @@ from transformerlib.models.gemma2.modeling_gemma2 import (
     apply_rotary_pos_emb,
 )
 
-from .configuration_gemma import OptGemmaConfig
+from .configuration_gemma import OptGemma2Config
 
 
 def default(val, d):
@@ -142,7 +142,7 @@ class Gemma2Attention(_Gemma2Attention):
         key_states = repeat_kv(key_states, self.num_key_value_groups)
         value_states = repeat_kv(value_states, self.num_key_value_groups)
 
-        print(key_states.shape, value_states.shape)
+        # print(key_states.shape, value_states.shape)
         if hidden_states.shape[1] > 1:
             key_states = safe_cat(k, key_states, dim = -2)
             value_states = safe_cat(v, value_states, dim = -2)
@@ -254,7 +254,7 @@ class Gemma2DecoderLayer(_Gemma2DecoderLayer):
     
 
 class Gemma2Model(_Gemma2Model):
-    def __init__(self, config: OptGemmaConfig):
+    def __init__(self, config: OptGemma2Config):
         super().__init__(config)
         self.padding_idx = config.pad_token_id
         self.vocab_size = config.vocab_size
@@ -285,7 +285,7 @@ class Gemma2Model(_Gemma2Model):
 
             self.layers.append(layer)
 
-        self.layer_weight = nn.Parameter(torch.ones(config.num_hidden_layers))
+        self.layer_weight = nn.Parameter(torch.ones(config.num_hidden_layers + 1))
         self.shared_k_proj = shared_k_proj
         self.shared_v_proj = shared_v_proj
         self.mem_len = 10
@@ -425,7 +425,7 @@ class Gemma2Model(_Gemma2Model):
     
 
 class Gemma2ForCausalLM(_Gemma2ForCausalLM):
-    config_class = OptGemmaConfig
+    config_class = OptGemma2Config
     _tied_weights_keys = ["lm_head.weight"]
 
     def __init__(self, config):

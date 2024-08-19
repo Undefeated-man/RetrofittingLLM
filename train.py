@@ -458,33 +458,35 @@ def prepare_qa_dataset(examples):
     start_positions = []
     end_positions = []
 
-    for context, questions, answers in zip(contexts, questions_list, answers_list):
-        for question, start, end in zip(questions, answers['answer_start'], answers['answer_end']):
-            # Tokenize the pair of context and question
-            inputs = tokenizer(question, context, truncation=True, padding="max_length", \
-                max_length=args.max_input_length - 50, return_offsets_mapping=True)
-            
-            input_ids.append(inputs['input_ids'])
-            attention_masks.append(inputs['attention_mask'])
+    with tqdm.tqdm(total=len(contexts)) as pbar:
+        for context, questions, answers in zip(contexts, questions_list, answers_list):
+            pbar.update(1)
+            for question, start, end in zip(questions, answers['answer_start'], answers['answer_end']):
+                # Tokenize the pair of context and question
+                inputs = tokenizer(question, context, truncation=True, padding="max_length", \
+                    max_length=args.max_input_length - 50, return_offsets_mapping=True)
+                
+                input_ids.append(inputs['input_ids'])
+                attention_masks.append(inputs['attention_mask'])
 
-            # Determine the start and end positions
-            offset_mapping = inputs['offset_mapping']
-            start_position = None
-            end_position = None
-            
-            for idx, (start_offset, end_offset) in enumerate(offset_mapping):
-                if start_offset <= start < end_offset:
-                    start_position = idx
-                if start_offset < end <= end_offset:
-                    end_position = idx
-                    break
+                # Determine the start and end positions
+                offset_mapping = inputs['offset_mapping']
+                start_position = None
+                end_position = None
+                
+                for idx, (start_offset, end_offset) in enumerate(offset_mapping):
+                    if start_offset <= start < end_offset:
+                        start_position = idx
+                    if start_offset < end <= end_offset:
+                        end_position = idx
+                        break
 
-            if start_position is not None and end_position is not None:
-                start_positions.append(start_position)
-                end_positions.append(end_position)
-            else:
-                start_positions.append(0)
-                end_positions.append(0)
+                if start_position is not None and end_position is not None:
+                    start_positions.append(start_position)
+                    end_positions.append(end_position)
+                else:
+                    start_positions.append(0)
+                    end_positions.append(0)
     
     output = {
         'input_ids': input_ids,
@@ -498,18 +500,23 @@ def prepare_qa_dataset(examples):
 
 def compute_acc(pred):
     labels = pred.label_ids
-    t = pred.predictions[1]
-    if len(t.shape) == 3:
-        preds = t[:, -1, :].argmax(-1)
-    else:
-        preds = pred.predictions[:, -1, :].argmax(-1)
-    # preds = t[:, -1, :].argmax(-1)
+    t = pred.predictions
+    if type(t) == tuple:
+        t = pred.predictions[0]
+    t = t[range(t.shape[0]), labels[:, 1], :]
+    preds = t.argmax(-1)
+    # print(t.shape)
+    # if len(t.shape) == 3:
+    #     preds = t[:, -1, :].argmax(-1)
+    # else:
+    #     preds = pred.predictions[:, -1, :].argmax(-1)
+    # # preds = t[:, -1, :].argmax(-1)
     
     # 去除填充部分的影响
-    if len(t.shape) == 3:
-        mask = labels != -100
-        labels = labels[mask]
-        preds = preds[mask]
+    # if len(t.shape) == 3:
+    #     mask = labels != -100
+    #     labels = labels[mask]
+    #     preds = preds[mask]
     
     # 计算准确率
     # print(labels, preds)
@@ -636,6 +643,7 @@ if __name__ == "__main__":
             # train_idx = int(len(dataset) * 0.9)
             train_dataset = dataset["train"]  # [:train_idx]  auxiliary_train
             valid_dataset = dataset["validation"][:args.eval_sample]  # [train_idx:]
+            print(f"\n\nGetting the first {args.eval_sample} samples for evaluation.\n\n")
             # train_dataset = Dataset.from_dict(train_dataset)
             # valid_dataset = Dataset.from_dict(valid_dataset)
             
@@ -645,6 +653,7 @@ if __name__ == "__main__":
             except:
                 tokenized_train_dataset = train_dataset.map(prepare_qa_dataset)
                 tokenized_valid_dataset = valid_dataset.map(prepare_qa_dataset)
+            print(tokenized_valid_dataset)
         elif args.eval_dataset == "EleutherAI/lambada_openai":
             dataset = load_dataset(args.tuning_set, trust_remote_code=True, split="test").shuffle(seed=37)
             # split the dataset into train and validation

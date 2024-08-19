@@ -341,8 +341,8 @@ def get_model(args):
         from transformerlib.models.gemma2 import modeling_gemma2 as gemma
         from gemma_models.modeling_gemma import Gemma2ForCausalLM, Gemma2ForQuestionAnswering
         if args.checkpoint_dir:
-            model = gemma.Gemma2ForCausalLM.from_pretrained("google/gemma-2-2b", attn_implementation='eager')  # args.checkpoint_dir) 
-            # model = torch.load("tinyllama.model")
+            # model = gemma.Gemma2ForCausalLM.from_pretrained("google/gemma-2-2b", attn_implementation='eager')  # args.checkpoint_dir) 
+            model = torch.load("Gemma2ForCausalLM_.model")
                 
             if args.eval_dataset:
                 if args.eval_dataset == "stanfordnlp/coqa":
@@ -350,12 +350,12 @@ def get_model(args):
                     config = AutoConfig.from_pretrained("google/gemma-2-2b")
                         
                     qa_model = Gemma2ForQuestionAnswering(config)
-                    qa_model.transformer = model.model
+                    qa_model.model = model.model
                     # if qa_model.qa_outputs.bias is not None:
                     #     torch.nn.init.zeros_(qa_model.qa_outputs.bias)
                     model = qa_model
         else:
-            pretrained_model = Gemma2ForCausalLM.from_pretrained("google/gemma-2-2b", attn_implementation='eager')
+            pretrained_model = gemma.Gemma2ForCausalLM.from_pretrained("google/gemma-2-2b", attn_implementation='eager')
             if args.config_pth:
                 config = AutoConfig.from_pretrained(args.config_pth)
             else:

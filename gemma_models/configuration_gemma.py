@@ -18,9 +18,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ LLaMA model configuration"""
-from transformerlib.models.gemma2.configuration_gemma2 import GemmaConfig as _GemmaConfig
+from transformerlib.models.gemma2.configuration_gemma2 import Gemma2Config as _Gemma2Config
 
-class OptGemmaConfig(_GemmaConfig):
+class OptGemma2Config(_Gemma2Config):
 
     model_type = "feedback-gemma2"
 

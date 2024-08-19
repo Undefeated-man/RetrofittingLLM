@@ -1,9 +1,9 @@
-from .configuration_gemma import OptLlamaConfig
-from .modeling_gemma import LlamaForCausalLM as OptLlamaForCausalLM
+from .configuration_gemma import OptGemma2Config
+from .modeling_gemma import Gemma2ForCausalLM as OptGemmaForCausalLM
 
-from transformers import AutoConfig, AutoModelForCausalLM
-AutoConfig.register("opt-llama", OptLlamaConfig)
-AutoModelForCausalLM.register(OptLlamaConfig, OptLlamaForCausalLM)
+from transformerlib import AutoConfig, AutoModelForCausalLM
+AutoConfig.register("feedback-gemma2", OptGemma2Config)
+AutoModelForCausalLM.register(OptGemma2Config, OptGemmaForCausalLM)
 
 # import os
 
