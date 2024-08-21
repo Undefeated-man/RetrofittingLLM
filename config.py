@@ -15,7 +15,7 @@
 # total_steps = 7000
 # warmup_steps = total_steps//10 if total_steps < 2000 else 200
 # max_input_length = 1024
-# eval_sample = 1000
+# eval_sample = 100000
 # save_steps = 50
 # model_name = "feedback-gemma"
 # checkpoint_dir = None
@@ -46,7 +46,7 @@ greater_is_better = False if "mmlu" in eval_dataset else True
 total_steps = 3000
 warmup_steps = total_steps//10 if total_steps < 2000 else 200
 max_input_length = 512
-eval_sample = 1000
+eval_sample = 100000
 model_name = "gemma"
 checkpoint_dir = None
 # checkpoint_dir = "/workspace/RetrofittingLLM/results/Gemma2ForCausalLM_.model"
