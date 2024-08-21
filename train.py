@@ -253,6 +253,17 @@ if args.tuning_mode:
                 # print(predicted_token_id)
                 loss = nn.CrossEntropyLoss()(logits[torch.arange(logits.size(0)), labels[:, 1].view(-1), :], labels[:, 0].view(-1))
                 return (loss, outputs) if return_outputs else loss
+    else:
+        class CustomTrainer(Trainer):
+            def save_model(self, output_dir=None, _internal_call=False):
+                if output_dir is None:
+                    output_dir = self.args.output_dir
+
+                # self.model.lm_head.weight = torch.nn.Parameter(self.model.transformer.wte.weight.clone())
+                torch.save(model, f"{model.__class__.__name__}.model")
+                self.model.save_pretrained(output_dir, safe_serialization=False)
+                torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
+                self.state.save_to_json(os.path.join(output_dir, "trainer_state.json"))
 else:
     if "feedback" in args.model_name:
         class CustomTrainer(Trainer):
@@ -365,7 +376,7 @@ def sliding_window(text, max_length=1024, overlap=50):
 
 
 @process_with_retry
-def prepare_eval(samples, batch_size):
+def prepare_mmlu(samples, batch_size):
     res = []
     ans = []
     choices = ["A", "B", "C", "D"]
@@ -374,7 +385,7 @@ def prepare_eval(samples, batch_size):
         choice = "; ".join(f"{i}. {j}" for i, j in zip(choices, c))
         sample = f"<question>{question}</question><choice>{choice}</choice><answer>"
         res.append(sample)
-        ans.append(answer)
+        ans.append(choices[answer])
     
     while batch_index < len(res):
         yield tokenizer(res[batch_index:batch_index+batch_size], return_tensors='pt', truncation=True, \
@@ -667,6 +678,12 @@ if __name__ == "__main__":
             tokenized_valid_dataset = valid_dataset.map(preprocess_cl_function, batched=True)
             tokenized_train_dataset = tokenized_train_dataset.map(lambda x: tokenizer.pad(x, padding="max_length"), batched=True)
             tokenized_valid_dataset = tokenized_valid_dataset.map(lambda x: tokenizer.pad(x, padding="max_length"), batched=True)
+        elif args.eval_dataset == "cais/mmlu":
+            dataset = load_dataset(args.tuning_set, "all")
+            train_dataset = dataset["auxiliary_train"] #load_dataset(args.dataset, split="train", streaming=True)
+            valid_dataset = dataset["validation"].select(range(args.eval_sample)) # load_dataset(args.dataset, split="validation", streaming=True)
+            tokenized_train_dataset = train_dataset.map(instruct, batched=True)
+            tokenized_valid_dataset = valid_dataset.map(instruct, batched=True)
     else:
         print(f"\nPretraining on: {args.dataset}")
         dataset = load_dataset(args.dataset, streaming=True)
@@ -681,6 +698,8 @@ if __name__ == "__main__":
             data_collator = DataCollatorWithPadding(tokenizer)
         elif args.eval_dataset == "EleutherAI/lambada_openai":
             data_collator = None
+        elif args.eval_dataset == "cais/mmlu":
+            data_collator = DataCollatorForLanguageModeling(tokenizer, mlm=False)
     else:
         # data_collator = FixDataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
         data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
@@ -736,6 +755,16 @@ if __name__ == "__main__":
                             compute_metrics=compute_acc,
                             callbacks=[CustomCallback()]
                         )
+        else:
+            trainer = CustomTrainer(
+                            model=model,
+                            args=training_args,
+                            data_collator=data_collator,
+                            train_dataset=tokenized_train_dataset,
+                            eval_dataset=tokenized_valid_dataset,
+                            tokenizer=tokenizer,
+                            callbacks=[CustomCallback()]
+                        )
     else:
         trainer = CustomTrainer(
                             model=model,
@@ -751,14 +780,15 @@ if __name__ == "__main__":
     #     trainer_state = TrainerState.load_from_json(os.path.join(args.checkpoint_dir, 'trainer_state.json'))
     #     trainer.state = trainer_state
     
-    trainer.train()
+    # trainer.train()
     # try:
     #     trainer.train()
     #     trainer.save_model()
     # except Exception as e:
     #    print("Error: %s"%e)
     #    trainer.save_model()
-    trainer.evaluate()
+    # trainer.evaluate()
+    # trainer.save_model()
     ##########################################################
     
     # ----------------------- unit test ------------------------ #
@@ -768,11 +798,6 @@ if __name__ == "__main__":
     # ---------------------------------------------------------- #
     
     if args.evalute_after_train:
-        del trainer
-        del tokenized_train_dataset
-        del train_dataset
-        cuda.empty_cache()
-        
         # Output an example to see the result
         device = torch.device("cuda")
         if args.tuning_mode:
@@ -784,7 +809,7 @@ if __name__ == "__main__":
             with tqdm.tqdm(total=round(len(valid_dataset)/args.batch_size/6)) as pbar:
                 model.to(device)
                 model.eval()
-                for samples, answers in prepare_eval(valid_dataset, args.batch_size*6):
+                for samples, answers in prepare_mmlu(valid_dataset, args.batch_size*6):
                     samples = {key: value.to(device) for key, value in samples.items()}
                     generated = model.generate(**samples, repetition_penalty=1.2, max_new_tokens=5)
                     for sample, answer in zip(generated, answers):
@@ -795,7 +820,8 @@ if __name__ == "__main__":
                             p = "E"
                         pred.append(clean(p))
                         gt.append(answer)
-                        if choices[gt[-1]] in pred[-1]:
+                        # print(f"gt:{gt}, pred: {pred}")
+                        if gt[-1] in pred[-1]:
                             cnt += 1
                     pbar.update(1)
             with open("output/pred.txt", "w") as f:

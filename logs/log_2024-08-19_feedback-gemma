@@ -172,3 +172,5 @@
 {'loss': 2.0087, 'grad_norm': 198.52566528320312, 'learning_rate': 1.9999842640648656e-05, 'epoch': 0.5094614264919942, 'train_perplexity': 7.453621338538909}
 {'eval_loss': 4.149363994598389, 'eval_accuracy': 0.46666666865348816, 'eval_runtime': 8.4106, 'eval_samples_per_second': 1.783, 'eval_steps_per_second': 1.783, 'epoch': 0.5094614264919942, 'eval_perplexity': 63.39366875818605}
 {'loss': 2.2597, 'grad_norm': 216.41024780273438, 'learning_rate': 1.9999370567547008e-05, 'epoch': 0.5215914604560893, 'train_perplexity': 9.580214671210241}
+{'loss': 11.3903, 'grad_norm': nan, 'learning_rate': 0.0, 'epoch': 0.00018408070097930933, 'train_perplexity': 88459.49123064484}
+{'loss': 8.5629, 'grad_norm': 53.92972183227539, 'learning_rate': 4.1e-06, 'epoch': 0.009204035048965466, 'train_perplexity': 5233.837313634877}
