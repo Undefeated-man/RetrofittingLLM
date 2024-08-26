@@ -7,7 +7,7 @@
 ## Current Issues Tracking
 1. (Solved) I used the "\n" to split each sample, and set the batch size as 8 (max_len=512), but still got CUDA_OUT_OF_MEMORY. $\Rightarrow$ Trying to reduce the batch size, use DP training, and utilize tricks like gradient accumulation and mix precision training.
    
-2. (Solved) Packages version conflict (transformers==4.43.0).
+2. (Solved) Packages version conflict (transformers==4.42.4).
 ------
 
 ## Datasets and Tasks
