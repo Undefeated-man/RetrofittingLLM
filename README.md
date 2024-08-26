@@ -2,10 +2,12 @@
 
 ------
 
+## To run 
+
 ## Current Issues Tracking
 1. (Solved) I used the "\n" to split each sample, and set the batch size as 8 (max_len=512), but still got CUDA_OUT_OF_MEMORY. $\Rightarrow$ Trying to reduce the batch size, use DP training, and utilize tricks like gradient accumulation and mix precision training.
    
-2. Packages version conflict (transformers==4.35.0).
+2. (Solved) Packages version conflict (transformers==4.43.0).
 ------
 
 ## Datasets and Tasks
@@ -18,23 +20,15 @@
 
 ### Evaluation (downstream tasks):
 
-[MMLU](https://github.com/hendrycks/test) - a benchmark to evaluate the model
-
-1. [TREC](https://huggingface.co/datasets/trec) - Test the memory and retrieval capacity.
-2. [SQuAD](https://rajpurkar.github.io/SQuAD-explorer/) - Test how performance improves when  the memory improves.
-3. [GSM8k](https://huggingface.co/datasets/gsm8k) - Evaluate the model's multihops reasoning capacity.
-4. [MultiWoz](https://github.com/budzianowski/multiwoz) - Access its multihops reasoning capacity on multiturns conversation (long context, without positional bias)
-5. [Scroll benchmark](https://www.scrolls-benchmark.com/getting-started) - Evaluate the overall performance on QA, Summarisation, NL Inference tasks over multiple domains with long context.
-
-
+[MMLU](https://huggingface.co/datasets/cais/mmlu) - a benchmark to evaluate the model
+[CoQA](https://huggingface.co/datasets/stanfordnlp/coqa) - a question answering task benchmark to evaluate the model
+[LAMBADA](https://huggingface.co/datasets/cimec/lambada) - to test the long-range dependencies
 
 
 
 ## Models
 
 1. Start from GPT2
-2. Then try gemma 2b
-3. Then try llama2 7b (not sure if the GPU is enough)
+2. Then try TinyLlama v1.1 (1.1B)
+3. Then try gemma2-2b
 
-## Results can be viewed here (To be continued...)
-Online result table: https://1drv.ms/x/c/402ef993809fda1e/EYvDxtt2SAZHjNa5OaGoZ-0BeAkV_OqgAsqu-e27EJIIjQ?e=ZwHhs3

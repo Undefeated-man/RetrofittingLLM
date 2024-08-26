@@ -780,15 +780,15 @@ if __name__ == "__main__":
     #     trainer_state = TrainerState.load_from_json(os.path.join(args.checkpoint_dir, 'trainer_state.json'))
     #     trainer.state = trainer_state
     
-    # trainer.train()
+    trainer.train()
     # try:
     #     trainer.train()
     #     trainer.save_model()
     # except Exception as e:
     #    print("Error: %s"%e)
     #    trainer.save_model()
-    # trainer.evaluate()
-    # trainer.save_model()
+    trainer.evaluate()
+    trainer.save_model()
     ##########################################################
     
     # ----------------------- unit test ------------------------ #

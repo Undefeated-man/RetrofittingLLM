@@ -178,7 +178,7 @@ def apply_rotary_pos_emb(q, k, cos, sin, position_ids=None, unsqueeze_dim=1):
     """
     cos = cos.unsqueeze(unsqueeze_dim)
     sin = sin.unsqueeze(unsqueeze_dim)
-    print(f"q: {q.shape}, k: {k.shape}, cos: {cos.shape}, sin: {sin.shape}")
+    # print(f"q: {q.shape}, k: {k.shape}, cos: {cos.shape}, sin: {sin.shape}")
     q_embed = (q * cos) + (rotate_half(q) * sin)
     k_embed = (k * cos) + (rotate_half(k) * sin)
     return q_embed, k_embed
