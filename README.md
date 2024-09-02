@@ -29,6 +29,15 @@
 ## Models
 
 1. Start from GPT2
+![image](https://github.com/user-attachments/assets/0aabeb76-e490-4b89-b4f5-9cd97633e055)
+
+
 2. Then try TinyLlama v1.1 (1.1B)
-3. Then try gemma2-2b
+3. Then try Gemma2-2b
+
+
+## Evaluation result
+![image](https://github.com/user-attachments/assets/1e91a2a5-f6fd-4d3c-90c9-d4d3c729d9fc)
+
+![image](https://github.com/user-attachments/assets/1b24cb06-ad74-4832-a1e3-87629438a885)
 
