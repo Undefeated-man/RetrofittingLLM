@@ -33,8 +33,10 @@
 3. Then try Gemma2-2b
    ![image](https://github.com/user-attachments/assets/0aabeb76-e490-4b89-b4f5-9cd97633e055)
 
-   The method to concate the memory, past_kv, and current_kv:
-   ![image](https://github.com/user-attachments/assets/c050e85f-dc8b-4a3a-8253-107d44d923cb)
+#### Notice!
+The method to concate the memory, past_kv, and current_kv is shown as below:
+
+![image](https://github.com/user-attachments/assets/c050e85f-dc8b-4a3a-8253-107d44d923cb)
 
 
 
